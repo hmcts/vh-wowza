@@ -1,0 +1,82 @@
+trigger:
+  batch: true
+  branches:
+    include:
+      - master
+
+pr:
+  autoCancel: true
+  branches:
+    include:
+      - master
+
+variables:
+  - group: vh-wowza
+  - group: vh-infra-dev
+  - group: vh-infra-pilot
+  - name: vmImage
+    value: Ubuntu-16.04
+
+stages:
+  - stage: Plan_Preview_Environments
+    jobs:
+    - job: Preview_Plan
+      pool:
+          vmImage: $(vmImage)
+
+      variables:
+        - group: vh-infra-dev
+
+      strategy:
+        maxParallel: 3
+        matrix:
+          Preview:
+            environment: Preview
+
+      steps:
+      - checkout: self
+        clean: true
+
+      - task: DownloadSecureFile@1
+        name: sshPubKey
+        displayName: Download SSH Public Key
+        inputs:
+          secureFile: $(sshKeyName)
+
+      - template: pipeline/terraform-plan.yml
+        parameters:
+          workingDirectory: $(system.defaultWorkingDirectory)/terraform
+          storageAccount: $(infra_storage_account_dev)
+          environment: $(environment)
+          serviceConnection:
+            arm: $(infra_arm_service_connection_dev)
+            dns: $(infra_arm_service_connection_pilot)
+          tf_params:
+            dns_tenant_id: $(dns_Tenant_Id)
+            dns_client_id: $(dns_Client_Id)
+            dns_client_secret: $(dns_Client_Secret)
+            dns_subscription_id: $(dns_Subscription_Id)
+            dns_zone_name: $(publicDnsZoneName)
+            dns_resource_group: $(publicDnsZoneResourceGroup)
+            admin_ssh_key_path: $(sshPubKey.secureFilePath)
+            service_certificate_kv_url: $(publicCertKVSecretUrl)
+            service_certificate_thumbprint: $(publicCertThumbprint)
+            key_vault_id: $(publicCertKVResourceId)
+
+  # - stage: Deploy_Preview_Environments
+  #   condition: succeeded()
+  #   dependsOn:
+  #     - Plan_Preview_Environments
+  #   jobs:
+  #     - template: pipeline/terraform-deployment.yml
+  #       parameters:
+  #         workingDirectory: $(system.defaultWorkingDirectory)/terraform
+  #         vmImage: $(vmImage)
+
+  #         environments:
+  #           - name: Preview
+  #             storageAccount: $(infra_storage_account_dev)
+  #             armServiceConnection: $(infra_arm_service_connection_dev)
+  #             dnsServiceConnection: $(infra_arm_service_connection_pilot)
+  #             aksServiceConnection: DTS-SHAREDSERVICES-SBOX
+  #             deploymentBranch: refs/
