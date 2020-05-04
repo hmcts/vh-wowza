@@ -50,7 +50,7 @@ stages:
           environment: $(environment)
           serviceConnections:
             arm: $(infra_arm_service_connection_dev)
-            dns: $(infra_arm_service_connection_pilot)
+            dns: $(infra_arm_service_connection_prod)
           tf_params:
             dns_tenant_id: $(dns_Tenant_Id)
             dns_client_id: $(dns_Client_Id)
@@ -77,6 +77,6 @@ stages:
   #           - name: Preview
   #             storageAccount: $(infra_storage_account_dev)
   #             armServiceConnection: $(infra_arm_service_connection_dev)
-  #             dnsServiceConnection: $(infra_arm_service_connection_pilot)
+  #             dnsServiceConnection: $(infra_arm_service_connection_prod)
   #             aksServiceConnection: DTS-SHAREDSERVICES-SBOX
   #             deploymentBranch: refs/
