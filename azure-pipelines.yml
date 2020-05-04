@@ -13,7 +13,7 @@ pr:
 variables:
   - group: vh-wowza
   - group: vh-infra-dev
-  - group: vh-infra-pilot
+  - group: vh-infra-prod
   - name: vmImage
     value: Ubuntu-16.04
 
