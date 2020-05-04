@@ -48,7 +48,7 @@ stages:
           workingDirectory: $(system.defaultWorkingDirectory)/terraform
           storageAccount: $(infra_storage_account_dev)
           environment: $(environment)
-          serviceConnection:
+          serviceConnections:
             arm: $(infra_arm_service_connection_dev)
             dns: $(infra_arm_service_connection_pilot)
           tf_params:
