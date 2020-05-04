@@ -26,13 +26,15 @@ steps:
           }
 
   - pwsh: |
+      $output = @{}
       Get-ChildItem ENV: | % {
         if($_.name -match '^tfparam_(.+)') {
-          @{
+          $output += @{
             $matches[1] = $_.value
           }
         }
-      } | ConvertTo-Json | Set-Content params.auto.tfvars.json -force
+      }
+      $output | ConvertTo-Json | Set-Content params.auto.tfvars.json -force
 
       gc params.auto.tfvars.json
     workingDirectory: ${{ parameters.workingDirectory }}
