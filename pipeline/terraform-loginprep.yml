@@ -36,7 +36,7 @@ steps:
     workingDirectory: ${{ parameters.workingDirectory }}
     displayName: Create Param File
     env:
-      ${{ param in parameters.tf_params }}:
+      ${{ each param in parameters.tf_params }}:
         tfparam_${{ param.key }}: ${{ param.value }}
 
   - task: AzureCLI@2
