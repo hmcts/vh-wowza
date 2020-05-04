@@ -45,7 +45,6 @@ stages:
 
       - template: pipeline/terraform-plan.yml
         parameters:
-          workingDirectory: $(system.defaultWorkingDirectory)/terraform
           storageAccount: $(infra_storage_account_dev)
           environment: $(environment)
           serviceConnections:
@@ -70,7 +69,6 @@ stages:
   #   jobs:
   #     - template: pipeline/terraform-deployment.yml
   #       parameters:
-  #         workingDirectory: $(system.defaultWorkingDirectory)/terraform
   #         vmImage: $(vmImage)
 
   #         environments:
