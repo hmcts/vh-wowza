@@ -21,7 +21,7 @@ steps:
           az account set -s ${{ connection.value }}
           echo "##vso[task.setvariable variable=${{ connection.key }}_SUBSCRIPTION_ID]$(az account show --query 'id' --output tsv)"
           echo "##vso[task.setvariable variable=${{ connection.key }}_TENANT_ID]$(az account show --query 'tenantId' --output tsv)"
-          if ('${{ connection.key }} -eq  'arm') {
+          if ('${{ connection.key }}' -eq  'arm') {
             echo "##vso[task.setvariable variable=${{ connection.key }}_ACCESS_KEY]$(az storage account keys list -n ${{ parameters.storageAccount }} --query [0].value --output tsv)"
           }
 
