@@ -1,0 +1,28 @@
+parameters:
+  name:
+  workingDirectory: $(system.defaultWorkingDirectory)
+  vmImage: ""
+  environments: []
+
+jobs:
+- ${{ each deployment in parameters.environments }}:
+  - deployment: ${{ parameters.name }}
+
+    pool:
+      vmImage: ${{ parameters.vmImage }}
+
+    condition: startsWith(variables['Build.SourceBranch'], '${{ deployment.deploymentBranch }}')
+    environment: ${{ deployment.name }}
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: self
+            clean: true
+
+          - template: terraform-deploy.yml
+            parameters:
+              workingDirectory: ${{ parameters.workingDirectory }}
+              storageAccount: ${{ deployment.storageAccount }}
+              environment: ${{ deployment.name }}
+              serviceConnections: ${{ deployment.serviceConnections }}

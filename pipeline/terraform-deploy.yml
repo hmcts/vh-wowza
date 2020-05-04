@@ -1,0 +1,57 @@
+parameters:
+  workingDirectory: $(system.defaultWorkingDirectory)
+  storageAccount: ""
+  serviceConnections: ""
+  environment: ""
+  tf_params:
+
+steps:
+  - task: AzureCLI@2
+    displayName: Add TF_STATE Storage FW Exception
+    inputs:
+      azureSubscription: ${{ parameters.serviceConnections.arm }}
+      scriptType: pscore
+      scriptLocation: inlineScript
+      inlineScript: |
+        $ip = (Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
+        az storage account network-rule add --account-name $env:storageAccount --ip-address "$IP"
+    env:
+      storageAccount: ${{ parameters.storageAccount }}
+
+  - template: terraform-loginprep.yml
+    parameters:
+      workingDirectory: ${{ parameters.workingDirectory }}
+      storageAccount: ${{ parameters.storageAccount }}
+      ServiceConnections: ${{ parameters.serviceConnections }}
+      environment: ${{ parameters.environment }}
+      tf_params: ${{ parameters.tf_params }}
+
+  - task: DownloadPipelineArtifact@2
+    displayName: Download Terraform Plan
+    inputs:
+      artifactName: tfplan-${{ parameters.environment }}
+      targetPath: ${{ parameters.workingDirectory }}
+
+  - task: AzureCLI@2
+    displayName: Terraform apply
+    inputs:
+      azureSubscription: ${{ parameters.serviceConnections.arm }}
+      scriptType: pscore
+      scriptLocation: inlineScript
+      failOnStandardError: true
+      workingDirectory: ${{ parameters.workingDirectory }}
+      inlineScript: |
+        terraform apply -auto-approve plan.tfplan
+
+  - task: AzureCLI@2
+    displayName: Remove TF_STATE Storage FW Exception
+    condition: always()
+    inputs:
+      azureSubscription: ${{ parameters.serviceConnections.arm }}
+      scriptType: pscore
+      scriptLocation: inlineScript
+      inlineScript: |
+        $ip = (Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
+        az storage account network-rule remove --account-name $env:storageAccount --ip-address "$IP"
+    env:
+      storageAccount: ${{ parameters.storageAccount }}

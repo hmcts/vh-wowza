@@ -62,19 +62,24 @@ stages:
             service_certificate_thumbprint: $(publicCertThumbprint)
             key_vault_id: $(publicCertKVResourceId)
 
-  # - stage: Deploy_Preview_Environments
-  #   condition: succeeded()
-  #   dependsOn:
-  #     - Plan_Preview_Environments
-  #   jobs:
-  #     - template: pipeline/terraform-deployment.yml
-  #       parameters:
-  #         vmImage: $(vmImage)
+  - stage: Deploy_Dev_Environments
+    dependsOn:
+      - Plan_Dev_Environments
+    jobs:
+      - template: pipeline/terraform-deployment.yml
+        parameters:
+          name: vh-wowza
+          vmImage: $(vmImage)
 
-  #         environments:
-  #           - name: Preview
-  #             storageAccount: $(infra_storage_account_dev)
-  #             armServiceConnection: $(infra_arm_service_connection_dev)
-  #             dnsServiceConnection: $(infra_arm_service_connection_prod)
-  #             aksServiceConnection: DTS-SHAREDSERVICES-SBOX
-  #             deploymentBranch: refs/
+          environments:
+            - name: dev
+              storageAccount: $(infra_storage_account_dev)
+              serviceConnections:
+                arm: $(infra_arm_service_connection_dev)
+                dns: $(infra_arm_service_connection_prod)
+              deploymentBranch: refs/
+              tf_params:
+                dns_tenant_id: $(dns_Tenant_Id)
+                dns_client_id: $(dns_Client_Id)
+                dns_client_secret: $(dns_Client_Secret)
+                dns_subscription_id: $(dns_Subscription_Id)
