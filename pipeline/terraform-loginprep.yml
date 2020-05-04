@@ -47,7 +47,7 @@ steps:
       scriptLocation: inlineScript
       inlineScript: |
         $ip = (Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
-        az storage account network-rule add --account-name $env:storageAccount --ip-address "$IP/32"
+        az storage account network-rule add --account-name $env:storageAccount --ip-address "$IP"
     env:
       storageAccount: ${{ parameters.storageAccount }}
 
@@ -87,6 +87,6 @@ steps:
       scriptLocation: inlineScript
       inlineScript: |
         $ip = (Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
-        az storage account network-rule remove --account-name $env:storageAccount --ip-address "$IP/32"
+        az storage account network-rule remove --account-name $env:storageAccount --ip-address "$IP"
     env:
       storageAccount: ${{ parameters.storageAccount }}
