@@ -18,9 +18,9 @@ variables:
     value: Ubuntu-16.04
 
 stages:
-  - stage: Plan_Preview_Environments
+  - stage: Plan_Dev_Environments
     jobs:
-    - job: Preview_Plan
+    - job: Dev_Plan
       pool:
           vmImage: $(vmImage)
 
@@ -30,8 +30,8 @@ stages:
       strategy:
         maxParallel: 3
         matrix:
-          Preview:
-            environment: Preview
+          Dev:
+            environment: dev
 
       steps:
       - checkout: self

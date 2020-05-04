@@ -29,14 +29,10 @@ steps:
       $output = @{}
       Get-ChildItem ENV: | % {
         if($_.name -match '^tfparam_(.+)') {
-          $output += @{
-            $matches[1] = $_.value
-          }
+          $output += @{ $matches[1] = $_.value }
         }
       }
       $output | ConvertTo-Json | Set-Content params.auto.tfvars.json -force
-
-      gc params.auto.tfvars.json
     workingDirectory: ${{ parameters.workingDirectory }}
     displayName: Create Param File
     env:
@@ -62,6 +58,8 @@ steps:
         }
 
         terraform init -backend-config="storage_account_name=${{ parameters.storageAccount }}" -reconfigure
+
+        terraform workspace list
 
         if($null -eq (terraform workspace list | Select-String '${{ parameters.environment }}$')) {
           terraform workspace new ${{ parameters.environment }}
