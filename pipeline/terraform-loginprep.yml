@@ -40,16 +40,16 @@ steps:
         tfparam_${{ param.key }}: ${{ param.value }}
   
   - task: AzureCLI@2
-      displayName: Add TF_STATE Storage FW Exception
-      inputs:
-        azureSubscription: ${{ parameters.serviceConnections.arm }}
-        scriptType: pscore
-        scriptLocation: inlineScript
-        inlineScript: |
-          $ip = (Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
-          az storage account network-rule add --name $env:storageAccount --ip-address "$IP/32"
-      env:
-        storageAccount: ${{ parameters.storageAccount }}
+    displayName: Add TF_STATE Storage FW Exception
+    inputs:
+      azureSubscription: ${{ parameters.serviceConnections.arm }}
+      scriptType: pscore
+      scriptLocation: inlineScript
+      inlineScript: |
+        $ip = (Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
+        az storage account network-rule add --name $env:storageAccount --ip-address "$IP/32"
+    env:
+      storageAccount: ${{ parameters.storageAccount }}
 
   - task: AzureCLI@2
     displayName: Terraform Backend Initialisation
@@ -79,14 +79,14 @@ steps:
       workingDirectory: ${{ parameters.workingDirectory }}
   
   - task: AzureCLI@2
-      displayName: Remove TF_STATE Storage FW Exception
-      condition: always()
-      inputs:
-        azureSubscription: ${{ parameters.serviceConnections.arm }}
-        scriptType: pscore
-        scriptLocation: inlineScript
-        inlineScript: |
-          $ip = (Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
-          az storage account network-rule remove --name $env:storageAccount --ip-address "$IP/32"
-      env:
-        storageAccount: ${{ parameters.storageAccount }}
+    displayName: Remove TF_STATE Storage FW Exception
+    condition: always()
+    inputs:
+      azureSubscription: ${{ parameters.serviceConnections.arm }}
+      scriptType: pscore
+      scriptLocation: inlineScript
+      inlineScript: |
+        $ip = (Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
+        az storage account network-rule remove --name $env:storageAccount --ip-address "$IP/32"
+    env:
+      storageAccount: ${{ parameters.storageAccount }}
