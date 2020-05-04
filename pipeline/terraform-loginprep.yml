@@ -6,7 +6,7 @@ parameters:
   tf_params:
 
 steps:
-  ${{ each connection in parameters.serviceConnections }}:
+  - ${{ each connection in parameters.serviceConnections }}:
     - task: AzureCLI@2
       displayName: Terraform Prepare Login (${{ connection.key }})
       inputs:
