@@ -33,6 +33,8 @@ steps:
           }
         }
       } | ConvertTo-Json | Set-Content params.auto.tfvars.json -force
+
+      gc params.auto.tfvars.json
     workingDirectory: ${{ parameters.workingDirectory }}
     displayName: Create Param File
     env:
