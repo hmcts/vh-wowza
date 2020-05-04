@@ -13,6 +13,18 @@ steps:
     workingDirectory: ${{ parameters.workingDirectory }}
     displayName: Terraform validate
 
+  - task: AzureCLI@2
+    displayName: Add TF_STATE Storage FW Exception
+    inputs:
+      azureSubscription: ${{ parameters.serviceConnections.arm }}
+      scriptType: pscore
+      scriptLocation: inlineScript
+      inlineScript: |
+        $ip = (Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
+        az storage account network-rule add --account-name $env:storageAccount --ip-address "$IP"
+    env:
+      storageAccount: ${{ parameters.storageAccount }}
+
   - template: terraform-loginprep.yml
     parameters:
       workingDirectory: ${{ parameters.workingDirectory }}
@@ -31,6 +43,19 @@ steps:
       inlineScript: |
         terraform plan -out="plan.tfplan" -input=false
       workingDirectory: ${{ parameters.workingDirectory }}
+
+  - task: AzureCLI@2
+    displayName: Remove TF_STATE Storage FW Exception
+    condition: always()
+    inputs:
+      azureSubscription: ${{ parameters.serviceConnections.arm }}
+      scriptType: pscore
+      scriptLocation: inlineScript
+      inlineScript: |
+        $ip = (Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
+        az storage account network-rule remove --account-name $env:storageAccount --ip-address "$IP"
+    env:
+      storageAccount: ${{ parameters.storageAccount }}
 
   - task: PublishPipelineArtifact@1
     displayName: Publish Terraform Plan
