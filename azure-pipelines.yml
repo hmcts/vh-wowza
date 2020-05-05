@@ -38,9 +38,9 @@ stages:
         - ${{ parameters.environment }}
       deploymentBranch: ${{ parameters.deploymentBranch }}
       serviceConnections:
-        ${{ if containValue(['Dev','Demo'], parameters.environment) }}:
+        ${{ if or(eq('Dev', parameters.environment),eq('Demo', parameters.environment)) }}:
           arm: $(infra_arm_service_connection_dev)
-        ${{ if containValue(['Preprod','Prod'], parameters.environment) }}:
+        ${{ if or(eq('Preprod', parameters.environment),eq('Prod', parameters.environment)) }}:
           arm: $(infra_arm_service_connection_prod)
         dns: $(infra_arm_service_connection_prod)
       tf_params:
