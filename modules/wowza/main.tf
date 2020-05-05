@@ -114,7 +114,7 @@ resource "azurerm_network_security_group" "wowza" {
   }
 
   security_rule {
-    name                       = "HTTPS"
+    name                       = "RTMPS"
     priority                   = 1040
     direction                  = "Inbound"
     access                     = "Allow"
