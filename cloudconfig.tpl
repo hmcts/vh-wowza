@@ -486,7 +486,7 @@ write_files:
       #
       # By default this script does nothing.
 
-      sudo bash /home/wowza/mount.sh /usr/local/WowzaStreamingEngine/content
+      sudo bash /home/wowza/mount.sh /usr/local/WowzaStreamingEngine/content/azurecopy
 
       exit 0
   - owner: wowza:wowza
@@ -514,6 +514,7 @@ write_files:
       wowza ${streamPassword}
 runcmd:
   - 'sudo mkdir /mnt/blobfusetmp'
+  - 'sudo mkdir /usr/local/WowzaStreamingEngine/content/azurecopy'
   - 'secretsname=$(find /var/lib/waagent/ -name "${certThumbprint}.prv" | cut -c -57)'
   - 'openssl pkcs12 -export -out $secretsname.pfx -inkey $secretsname.prv -in $secretsname.crt -passin pass: -passout pass:${certPassword}'
   - 'export PATH=$PATH:/usr/local/WowzaStreamingEngine/java/bin'

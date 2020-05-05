@@ -187,6 +187,18 @@ resource "random_password" "streamPassword" {
   override_special = "_%*"
 }
 
+resource "azurerm_key_vault_secret" "restPassword" {
+  name         = "restPassword-${terraform.workspace}"
+  value        = random_password.restPassword.result
+  key_vault_id = var.key_vault_id
+}
+
+resource "azurerm_key_vault_secret" "streamPassword" {
+  name         = "streamPassword-${terraform.workspace}"
+  value        = random_password.streamPassword.result
+  key_vault_id = var.key_vault_id
+}
+
 data "template_file" "cloudconfig" {
   template = file(var.cloud_init_file)
   vars = {
