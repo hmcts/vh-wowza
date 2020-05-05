@@ -68,7 +68,7 @@ stages:
     jobs:
       - template: pipeline/terraform-deployment.yml
         parameters:
-          name: vh-wowza
+          name: vh_wowza
           vmImage: $(vmImage)
 
           environments:
@@ -83,3 +83,9 @@ stages:
                 dns_client_id: $(dns_Client_Id)
                 dns_client_secret: $(dns_Client_Secret)
                 dns_subscription_id: $(dns_Subscription_Id)
+              preSteps:
+                - task: DownloadSecureFile@1
+                  name: sshPubKey
+                  displayName: Download SSH Public Key
+                  inputs:
+                    secureFile: $(sshKeyName)

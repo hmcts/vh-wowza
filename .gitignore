@@ -18,3 +18,4 @@ logs/
 # Terraform log file
 terraform.log
 
+params.auto.tfvars.json
