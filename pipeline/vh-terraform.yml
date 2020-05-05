@@ -1,0 +1,213 @@
+parameters:
+  - name: baseAgent
+    type: string
+    default: Ubuntu-16.04
+
+  - name: deploymentBranch
+    displayName: Branch to Deploy
+    type: string
+    default: refs/heads/master
+
+  - name: deploymentResource
+    type: string
+
+  - name: releaseParameters
+    type: object
+    default: {}
+
+  - name: environments
+    type: object
+
+  - name: serviceConnections
+    type: object
+
+  - name: tf_params
+    type: object
+
+  - name: preSteps
+    type: stepList
+    default: []
+
+stages:
+- ${{ if or(eq(variables['Build.Reason'], 'ResourceTrigger'), containsValue(parameters.environments, 'Dev')) }}:
+  - stage: Plan_Dev_Environments
+    jobs:
+    - job: Dev_Plan
+      pool:
+          vmImage: ${{parameters.baseAgent}}
+
+      variables:
+        - group: vh-infra-dev
+        - name: environment
+          value: dev
+
+      steps:
+      - checkout: self
+        clean: true
+
+      - ${{ each step in parameters.preSteps }}:
+        - ${{ each pair in step }}:
+          ${{ pair.key }}: ${{ pair.value }}
+
+      - template: pipeline/terraform-plan.yml
+        parameters:
+          storageAccount: $(infra_storage_account_dev)
+          environment: $(environment)
+          serviceConnections: ${{ parameters.serviceConnections }}
+          tf_params: ${{ parameters.tf_params }}
+
+  - stage: Deploy_Dev_Environments
+    dependsOn:
+      - Plan_Dev_Environments
+    jobs:
+      - template: pipeline/terraform-deployment.yml
+        parameters:
+          name: ${{ parameters.deploymentResource }}
+          vmImage: ${{parameters.baseAgent}}
+
+          environments:
+            - name: dev
+              storageAccount: $(infra_storage_account_dev)
+              serviceConnections: ${{ parameters.serviceConnections }}
+              deploymentBranch: ${{ parameters.deploymentBranch }}
+              tf_params: ${{ parameters.tf_params }}
+              preSteps: ${{ parameters.preSteps }}
+
+- ${{ if containsValue(parameters.environments, 'Demo') }}:
+  - stage: Plan_Demo_Environments
+    dependsOn:
+      - Plan_Dev_Environments
+    jobs:
+    - job: Demo_Plan
+      pool:
+          vmImage: ${{parameters.baseAgent}}
+
+      variables:
+        - group: vh-infra-dev
+        - name: environment
+          value: demo
+
+      steps:
+      - checkout: self
+        clean: true
+
+      - ${{ each step in parameters.preSteps }}:
+        - ${{ each pair in step }}:
+          ${{ pair.key }}: ${{ pair.value }}
+
+      - template: pipeline/terraform-plan.yml
+        parameters:
+          storageAccount: $(infra_storage_account_dev)
+          environment: $(environment)
+          serviceConnections: ${{ parameters.serviceConnections }}
+          tf_params: ${{ parameters.tf_params }}
+
+  - stage: Deploy_Demo_Environments
+    dependsOn:
+      - Plan_Demo_Environments
+    jobs:
+      - template: pipeline/terraform-deployment.yml
+        parameters:
+          name: ${{ parameters.deploymentResource }}
+          vmImage: ${{parameters.baseAgent}}
+
+          environments:
+            - name: demo
+              storageAccount: $(infra_storage_account_dev)
+              serviceConnections: ${{ parameters.serviceConnections }}
+              deploymentBranch: ${{ parameters.deploymentBranch }}
+              tf_params: ${{ parameters.tf_params }}
+              preSteps: ${{ parameters.preSteps }}
+
+- ${{ if or(eq(variables['Build.Reason'], 'ResourceTrigger'), and(containsValue(parameters.environments, 'Preprod'), or(startsWith(parameters.deploymentBranch, 'refs/heads/release/'), startsWith(parameters.deploymentBranch, 'refs/heads/hotfix/')))) }}:
+  - stage: Plan_Preprod_Environments
+    dependsOn:
+      - Plan_Dev_Environments
+    jobs:
+    - job: Preprod_Plan
+      pool:
+          vmImage: ${{parameters.baseAgent}}
+
+      variables:
+        - group: vh-infra-prod
+        - name: environment
+          value: preprod
+
+      steps:
+      - checkout: self
+        clean: true
+
+      - ${{ each step in parameters.preSteps }}:
+        - ${{ each pair in step }}:
+          ${{ pair.key }}: ${{ pair.value }}
+
+      - template: pipeline/terraform-plan.yml
+        parameters:
+          storageAccount: $(infra_storage_account_prod)
+          environment: $(environment)
+          serviceConnections: ${{ parameters.serviceConnections }}
+          tf_params: ${{ parameters.tf_params }}
+
+  - stage: Deploy_Preprod_Environments
+    dependsOn:
+      - Plan_Preprod_Environments
+    jobs:
+      - template: pipeline/terraform-deployment.yml
+        parameters:
+          name: ${{ parameters.deploymentResource }}
+          vmImage: ${{parameters.baseAgent}}
+
+          environments:
+            - name: preprod
+              storageAccount: $(infra_storage_account_prod)
+              serviceConnections: ${{ parameters.serviceConnections }}
+              deploymentBranch: ${{ parameters.deploymentBranch }}
+              tf_params: ${{ parameters.tf_params }}
+              preSteps: ${{ parameters.preSteps }}
+
+- ${{ if or(eq(variables['Build.Reason'], 'ResourceTrigger'), and(containsValue(parameters.environments, 'Prod'), or(startsWith(parameters.deploymentBranch, 'refs/heads/release/'), startsWith(parameters.deploymentBranch, 'refs/heads/hotfix/')))) }}:
+  - stage: Plan_Prod_Environments
+    dependsOn:
+      - Plan_Dev_Environments
+    jobs:
+    - job: Prod_Plan
+      pool:
+          vmImage: ${{parameters.baseAgent}}
+
+      variables:
+        - group: vh-infra-prod
+        - name: environment
+          value: prod
+
+      steps:
+      - checkout: self
+        clean: true
+
+      - ${{ each step in parameters.preSteps }}:
+        - ${{ each pair in step }}:
+          ${{ pair.key }}: ${{ pair.value }}
+
+      - template: pipeline/terraform-plan.yml
+        parameters:
+          storageAccount: $(infra_storage_account_prod)
+          environment: $(environment)
+          serviceConnections: ${{ parameters.serviceConnections }}
+          tf_params: ${{ parameters.tf_params }}
+
+  - stage: Deploy_Prod_Environments
+    dependsOn:
+      - Plan_Prod_Environments
+      - Deploy_Preprod_Environments
+    jobs:
+      - template: pipeline/terraform-deployment.yml
+        parameters:
+          name: ${{ parameters.deploymentResource }}
+          vmImage: ${{parameters.baseAgent}}
+
+          environments:
+            - name: prod
+              storageAccount: $(infra_storage_account_prod)
+              serviceConnections: ${{ parameters.serviceConnections }}
+              deploymentBranch: ${{ parameters.deploymentBranch }}
+              tf_params: ${{ parameters.tf_params }}
+              preSteps: ${{ parameters.preSteps }}
