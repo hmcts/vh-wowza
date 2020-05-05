@@ -206,7 +206,7 @@ data "template_file" "cloudconfig" {
     certThumbprint     = upper(var.service_certificate_thumbprint)
     storageAccountName = azurerm_storage_account.wowza_recordings.name
     storageAccountKey  = azurerm_storage_account.wowza_recordings.primary_access_key
-    restPassword       = md5(":Wowzawowza:${random_password.restPassword.result}")
+    restPassword       = md5("wowza:Wowza:${random_password.restPassword.result}")
     streamPassword     = md5("wowza:Wowza:${random_password.streamPassword.result}")
   }
 }
