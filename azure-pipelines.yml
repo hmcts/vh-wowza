@@ -1,0 +1,325 @@
+variables:
+  - group: vh-wowza
+  - group: vh-infra-dev
+  - group: vh-infra-prod
+  - name: deploymentResource
+    value: vh_wowza
+  - name: baseAgent
+    value: Ubuntu-16.04
+
+trigger:
+  branches:
+    include:
+    - master
+    - release/*
+    - hotfix/*
+
+pr:
+  branches:
+    include:
+    - master
+
+stages:
+  - stage: Plan_Dev_Environments
+    jobs:
+    - job: Dev_Plan
+      pool:
+          vmImage: $(baseAgent)
+
+      variables:
+        - group: vh-infra-dev
+        - name: environment
+          value: dev
+
+      steps:
+      - checkout: self
+        clean: true
+
+      - task: DownloadSecureFile@1
+        name: sshPubKey
+        displayName: Download SSH Public Key
+        inputs:
+          secureFile: $(sshKeyName)
+
+      - template: pipeline/terraform-plan.yml
+        parameters:
+          storageAccount: $(infra_storage_account_dev)
+          environment: $(environment)
+          serviceConnections:
+            arm: $(infra_arm_service_connection_dev)
+            dns: $(infra_arm_service_connection_prod)
+          tf_params:
+            dns_tenant_id: $(dns_Tenant_Id)
+            dns_client_id: $(dns_Client_Id)
+            dns_client_secret: $(dns_Client_Secret)
+            dns_subscription_id: $(dns_Subscription_Id)
+            dns_zone_name: $(publicDnsZoneName)
+            dns_resource_group: $(publicDnsZoneResourceGroup)
+            admin_ssh_key_path: $(sshPubKey.secureFilePath)
+            service_certificate_thumbprint: $(publicCertThumbprint)
+            service_certificate_kv_url: $(publicCertKVSecretUrl_dev)
+            key_vault_id: $(publicCertKVResourceId_dev)
+
+  - stage: Deploy_Dev_Environments
+    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/master'))
+    dependsOn:
+      - Plan_Dev_Environments
+    jobs:
+      - template: pipeline/terraform-deployment.yml
+        parameters:
+          name: ${{ variables.deploymentResource }}
+          vmImage: $(baseAgent)
+
+          environments:
+            - name: dev
+              storageAccount: $(infra_storage_account_dev)
+              serviceConnections:
+                arm: $(infra_arm_service_connection_dev)
+                dns: $(infra_arm_service_connection_prod)
+              tf_params:
+                dns_tenant_id: $(dns_Tenant_Id)
+                dns_client_id: $(dns_Client_Id)
+                dns_client_secret: $(dns_Client_Secret)
+                dns_subscription_id: $(dns_Subscription_Id)
+                dns_zone_name: $(publicDnsZoneName)
+                dns_resource_group: $(publicDnsZoneResourceGroup)
+                admin_ssh_key_path: $(sshPubKey.secureFilePath)
+                service_certificate_thumbprint: $(publicCertThumbprint)
+                service_certificate_kv_url: $(publicCertKVSecretUrl_dev)
+                key_vault_id: $(publicCertKVResourceId_dev)
+              preSteps:
+                - task: DownloadSecureFile@1
+                  name: sshPubKey
+                  displayName: Download SSH Public Key
+                  inputs:
+                    secureFile: $(sshKeyName)
+
+  - stage: Plan_Demo_Environments
+    dependsOn:
+      - Plan_Dev_Environments
+    jobs:
+    - job: Demo_Plan
+      pool:
+          vmImage: $(baseAgent)
+
+      variables:
+        - group: vh-infra-dev
+        - name: environment
+          value: demo
+
+      steps:
+      - checkout: self
+        clean: true
+
+      - task: DownloadSecureFile@1
+        name: sshPubKey
+        displayName: Download SSH Public Key
+        inputs:
+          secureFile: $(sshKeyName)
+
+      - template: pipeline/terraform-plan.yml
+        parameters:
+          storageAccount: $(infra_storage_account_dev)
+          environment: $(environment)
+          serviceConnections:
+            arm: $(infra_arm_service_connection_dev)
+            dns: $(infra_arm_service_connection_prod)
+          tf_params:
+            dns_tenant_id: $(dns_Tenant_Id)
+            dns_client_id: $(dns_Client_Id)
+            dns_client_secret: $(dns_Client_Secret)
+            dns_subscription_id: $(dns_Subscription_Id)
+            dns_zone_name: $(publicDnsZoneName)
+            dns_resource_group: $(publicDnsZoneResourceGroup)
+            admin_ssh_key_path: $(sshPubKey.secureFilePath)
+            service_certificate_thumbprint: $(publicCertThumbprint)
+            service_certificate_kv_url: $(publicCertKVSecretUrl_demo)
+            key_vault_id: $(publicCertKVResourceId_demo)
+
+  - stage: Deploy_Demo_Environments
+    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/master'))
+    dependsOn:
+      - Plan_Demo_Environments
+    jobs:
+      - template: pipeline/terraform-deployment.yml
+        parameters:
+          name: ${{ variables.deploymentResource }}
+          vmImage: $(baseAgent)
+
+          environments:
+            - name: demo
+              storageAccount: $(infra_storage_account_dev)
+              serviceConnections:
+                arm: $(infra_arm_service_connection_dev)
+                dns: $(infra_arm_service_connection_prod)
+              tf_params:
+                dns_tenant_id: $(dns_Tenant_Id)
+                dns_client_id: $(dns_Client_Id)
+                dns_client_secret: $(dns_Client_Secret)
+                dns_subscription_id: $(dns_Subscription_Id)
+                dns_zone_name: $(publicDnsZoneName)
+                dns_resource_group: $(publicDnsZoneResourceGroup)
+                admin_ssh_key_path: $(sshPubKey.secureFilePath)
+                service_certificate_thumbprint: $(publicCertThumbprint)
+                service_certificate_kv_url: $(publicCertKVSecretUrl_demo)
+                key_vault_id: $(publicCertKVResourceId_demo)
+              preSteps:
+                - task: DownloadSecureFile@1
+                  name: sshPubKey
+                  displayName: Download SSH Public Key
+                  inputs:
+                    secureFile: $(sshKeyName)
+
+  - stage: Plan_Preprod_Environments
+    dependsOn:
+      - Plan_Dev_Environments
+    jobs:
+    - job: Preprod_Plan
+      pool:
+          vmImage: $(baseAgent)
+
+      variables:
+        - group: vh-infra-prod
+        - name: environment
+          value: preprod
+
+      steps:
+      - checkout: self
+        clean: true
+
+      - task: DownloadSecureFile@1
+        name: sshPubKey
+        displayName: Download SSH Public Key
+        inputs:
+          secureFile: $(sshKeyName)
+
+      - template: pipeline/terraform-plan.yml
+        parameters:
+          storageAccount: $(infra_storage_account_prod)
+          environment: $(environment)
+          serviceConnections:
+            arm: $(infra_arm_service_connection_prod)
+            dns: $(infra_arm_service_connection_prod)
+          tf_params:
+            dns_tenant_id: $(dns_Tenant_Id)
+            dns_client_id: $(dns_Client_Id)
+            dns_client_secret: $(dns_Client_Secret)
+            dns_subscription_id: $(dns_Subscription_Id)
+            dns_zone_name: $(publicDnsZoneName)
+            dns_resource_group: $(publicDnsZoneResourceGroup)
+            admin_ssh_key_path: $(sshPubKey.secureFilePath)
+            service_certificate_thumbprint: $(publicCertThumbprint)
+            service_certificate_kv_url: $(publicCertKVSecretUrl_preprod)
+            key_vault_id: $(publicCertKVResourceId_preprod)
+
+  - stage: Deploy_Preprod_Environments
+    condition: and(succeeded(), or(startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/')))
+    dependsOn:
+      - Plan_Preprod_Environments
+    jobs:
+      - template: pipeline/terraform-deployment.yml
+        parameters:
+          name: ${{ variables.deploymentResource }}
+          vmImage: $(baseAgent)
+
+          environments:
+            - name: preprod
+              storageAccount: $(infra_storage_account_prod)
+              serviceConnections:
+                arm: $(infra_arm_service_connection_prod)
+                dns: $(infra_arm_service_connection_prod)
+              tf_params:
+                dns_tenant_id: $(dns_Tenant_Id)
+              dns_client_id: $(dns_Client_Id)
+              dns_client_secret: $(dns_Client_Secret)
+              dns_subscription_id: $(dns_Subscription_Id)
+              dns_zone_name: $(publicDnsZoneName)
+              dns_resource_group: $(publicDnsZoneResourceGroup)
+              admin_ssh_key_path: $(sshPubKey.secureFilePath)
+              service_certificate_thumbprint: $(publicCertThumbprint)
+              service_certificate_kv_url: $(publicCertKVSecretUrl_preprod)
+              key_vault_id: $(publicCertKVResourceId_preprod)
+              preSteps:
+                - task: DownloadSecureFile@1
+                  name: sshPubKey
+                  displayName: Download SSH Public Key
+                  inputs:
+                    secureFile: $(sshKeyName)
+
+
+  - stage: Plan_Prod_Environments
+    dependsOn:
+      - Plan_Dev_Environments
+    jobs:
+    - job: Prod_Plan
+      pool:
+          vmImage: $(baseAgent)
+
+      variables:
+        - group: vh-infra-prod
+        - name: environment
+          value: prod
+
+      steps:
+      - checkout: self
+        clean: true
+
+      - task: DownloadSecureFile@1
+        name: sshPubKey
+        displayName: Download SSH Public Key
+        inputs:
+          secureFile: $(sshKeyName)
+
+      - template: pipeline/terraform-plan.yml
+        parameters:
+          storageAccount: $(infra_storage_account_prod)
+          environment: $(environment)
+          serviceConnections:
+            arm: $(infra_arm_service_connection_prod)
+            dns: $(infra_arm_service_connection_prod)
+          tf_params:
+            dns_tenant_id: $(dns_Tenant_Id)
+            dns_client_id: $(dns_Client_Id)
+            dns_client_secret: $(dns_Client_Secret)
+            dns_subscription_id: $(dns_Subscription_Id)
+            dns_zone_name: $(publicDnsZoneName)
+            dns_resource_group: $(publicDnsZoneResourceGroup)
+            admin_ssh_key_path: $(sshPubKey.secureFilePath)
+            service_certificate_thumbprint: $(publicCertThumbprint)
+            service_certificate_kv_url: $(publicCertKVSecretUrl_prod)
+            key_vault_id: $(publicCertKVResourceId_prod)
+
+  - stage: Deploy_Prod_Environments
+    condition: and(succeeded(), or(startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/')))
+    dependsOn:
+      - Plan_Prod_Environments
+      - Deploy_Preprod_Environments
+    jobs:
+      - template: pipeline/terraform-deployment.yml
+        parameters:
+          name: ${{ variables.deploymentResource }}
+          vmImage: $(baseAgent)
+
+          environments:
+            - name: prod
+              storageAccount: $(infra_storage_account_prod)
+              serviceConnections:
+                arm: $(infra_arm_service_connection_prod)
+                dns: $(infra_arm_service_connection_prod)
+              tf_params:
+                dns_tenant_id: $(dns_Tenant_Id)
+                dns_client_id: $(dns_Client_Id)
+                dns_client_secret: $(dns_Client_Secret)
+                dns_subscription_id: $(dns_Subscription_Id)
+                dns_zone_name: $(publicDnsZoneName)
+                dns_resource_group: $(publicDnsZoneResourceGroup)
+                admin_ssh_key_path: $(sshPubKey.secureFilePath)
+                service_certificate_thumbprint: $(publicCertThumbprint)
+                service_certificate_kv_url: $(publicCertKVSecretUrl_prod)
+                key_vault_id: $(publicCertKVResourceId_prod)
+              preSteps:
+                - task: DownloadSecureFile@1
+                  name: sshPubKey
+                  displayName: Download SSH Public Key
+                  inputs:
+                    secureFile: $(sshKeyName)

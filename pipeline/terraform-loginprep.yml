@@ -1,0 +1,69 @@
+parameters:
+  workingDirectory: $(system.defaultWorkingDirectory)
+  storageAccount: ""
+  serviceConnections:
+  environment: ""
+  tf_params:
+
+steps:
+  - ${{ each connection in parameters.serviceConnections }}:
+    - task: AzureCLI@2
+      displayName: Terraform Prepare Login (${{ connection.key }})
+      inputs:
+        azureSubscription: ${{ connection.value }}
+        scriptType: pscore
+        scriptLocation: inlineScript
+        AddSpnToEnvironment: true
+        workingDirectory: ${{ parameters.workingDirectory }}
+        inlineScript: |
+          echo "##vso[task.setvariable variable=${{ connection.key }}_CLIENT_ID]$env:servicePrincipalId"
+          echo "##vso[task.setvariable variable=${{ connection.key }}_CLIENT_SECRET]$env:servicePrincipalKey"
+          az account set -s ${{ connection.value }}
+          echo "##vso[task.setvariable variable=${{ connection.key }}_SUBSCRIPTION_ID]$(az account show --query 'id' --output tsv)"
+          echo "##vso[task.setvariable variable=${{ connection.key }}_TENANT_ID]$(az account show --query 'tenantId' --output tsv)"
+          if ('${{ connection.key }}' -eq  'arm') {
+            echo "##vso[task.setvariable variable=${{ connection.key }}_ACCESS_KEY]$(az storage account keys list -n ${{ parameters.storageAccount }} --query [0].value --output tsv)"
+          }
+
+  - pwsh: |
+      $output = @{}
+      Get-ChildItem ENV: | % {
+        if($_.name -match '^tfparam_(.+)') {
+          $output += @{ $matches[1] = $_.value }
+        }
+      }
+      $output | ConvertTo-Json | Set-Content params.auto.tfvars.json -force
+    workingDirectory: ${{ parameters.workingDirectory }}
+    displayName: Create Param File
+    env:
+      ${{ each param in parameters.tf_params }}:
+        tfparam_${{ param.key }}: ${{ param.value }}
+
+  - task: AzureCLI@2
+    displayName: Terraform Backend Initialisation
+    inputs:
+      azureSubscription: ${{ parameters.serviceConnections.arm }}
+      scriptType: pscore
+      scriptLocation: inlineScript
+      failOnStandardError: false
+      inlineScript: |
+        $tfFolder = Join-Path "${{ parameters.workingDirectory }}" ".terraform"
+        if(test-path $tfFolder) {
+          Remove-Item $tfFolder -Force -Recurse
+        }
+
+        $tfPlan = Join-Path "${{ parameters.workingDirectory }}" "plan.tfplan"
+        if(test-path $tfPlan) {
+          Remove-Item $tfPlan -Force
+        }
+
+        terraform init -backend-config="storage_account_name=${{ parameters.storageAccount }}" -reconfigure
+
+        terraform workspace list
+
+        if($null -eq (terraform workspace list | Select-String '${{ parameters.environment }}$')) {
+          terraform workspace new ${{ parameters.environment }}
+        } else {
+          terraform workspace select ${{ parameters.environment }}
+        }
+      workingDirectory: ${{ parameters.workingDirectory }}
