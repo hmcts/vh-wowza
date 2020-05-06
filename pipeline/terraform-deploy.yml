@@ -8,6 +8,10 @@ parameters:
   postSteps: []
 
 steps:
+  - ${{ each step in parameters.preSteps }}:
+      - ${{ each pair in step }}:
+          ${{ pair.key }}: ${{ pair.value }}
+
   - task: AzureCLI@2
     displayName: Add TF_STATE Storage FW Exception
     inputs:
@@ -57,3 +61,7 @@ steps:
         az storage account network-rule remove --account-name $env:storageAccount --ip-address "$IP"
     env:
       storageAccount: ${{ parameters.storageAccount }}
+
+  - ${{ each step in parameters.postSteps }}:
+      - ${{ each pair in step }}:
+          ${{ pair.key }}: ${{ pair.value }}
