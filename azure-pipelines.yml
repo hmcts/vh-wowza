@@ -24,7 +24,7 @@ stages:
     jobs:
     - job: Dev_Plan
       pool:
-          vmImage: $(baseAgent)
+          vmImage: ${{ variables.baseAgent }}
 
       variables:
         - group: vh-infra-dev
@@ -40,6 +40,18 @@ stages:
         displayName: Download SSH Public Key
         inputs:
           secureFile: $(sshKeyName)
+
+      - task: AzureCLI@2
+        displayName: Add keyvault FW Exception
+        inputs:
+          azureSubscription: $(infra_arm_service_connection_dev)
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            $ip = (Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
+            az keyvault network-rule add --name $env:keyVaultName --ip-address "$IP/32"
+        env:
+          keyVaultName: $(publicCertKVName_dev)
 
       - template: pipeline/terraform-plan.yml
         parameters:
@@ -60,6 +72,19 @@ stages:
             service_certificate_kv_url: $(publicCertKVSecretUrl_dev)
             key_vault_id: $(publicCertKVResourceId_dev)
 
+      - task: AzureCLI@2
+        displayName: Remove KeyVault FW Exception
+        condition: always()
+        inputs:
+          azureSubscription: $(infra_arm_service_connection_dev)
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            $ip = (Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
+            az keyvault network-rule remove --name $env:keyVaultName --ip-address "$IP/32"
+        env:
+          keyVaultName: $(publicCertKVName_dev)
+
   - stage: Deploy_Dev_Environments
     condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/master'))
     dependsOn:
@@ -68,7 +93,7 @@ stages:
       - template: pipeline/terraform-deployment.yml
         parameters:
           name: ${{ variables.deploymentResource }}
-          vmImage: $(baseAgent)
+          vmImage: ${{ variables.baseAgent }}
 
           environments:
             - name: dev
@@ -93,6 +118,30 @@ stages:
                   displayName: Download SSH Public Key
                   inputs:
                     secureFile: $(sshKeyName)
+                - task: AzureCLI@2
+                  displayName: Add keyvault FW Exception
+                  inputs:
+                    azureSubscription: $(infra_arm_service_connection_dev)
+                    scriptType: pscore
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      $ip = (Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
+                      az keyvault network-rule add --name $env:keyVaultName --ip-address "$IP/32"
+                  env:
+                    keyVaultName: $(publicCertKVName_dev)
+              postSteps:
+                - task: AzureCLI@2
+                  displayName: Remove KeyVault FW Exception
+                  condition: always()
+                  inputs:
+                    azureSubscription: $(infra_arm_service_connection_dev)
+                    scriptType: pscore
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      $ip = (Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
+                      az keyvault network-rule remove --name $env:keyVaultName --ip-address "$IP/32"
+                  env:
+                    keyVaultName: $(publicCertKVName_dev)
 
   - stage: Plan_Demo_Environments
     dependsOn:
@@ -100,7 +149,7 @@ stages:
     jobs:
     - job: Demo_Plan
       pool:
-          vmImage: $(baseAgent)
+          vmImage: ${{ variables.baseAgent }}
 
       variables:
         - group: vh-infra-dev
@@ -116,6 +165,18 @@ stages:
         displayName: Download SSH Public Key
         inputs:
           secureFile: $(sshKeyName)
+
+      - task: AzureCLI@2
+        displayName: Add keyvault FW Exception
+        inputs:
+          azureSubscription: $(infra_arm_service_connection_dev)
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            $ip = (Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
+            az keyvault network-rule add --name $env:keyVaultName --ip-address "$IP/32"
+        env:
+          keyVaultName: $(publicCertKVName_demo)
 
       - template: pipeline/terraform-plan.yml
         parameters:
@@ -136,6 +197,19 @@ stages:
             service_certificate_kv_url: $(publicCertKVSecretUrl_demo)
             key_vault_id: $(publicCertKVResourceId_demo)
 
+      - task: AzureCLI@2
+        displayName: Remove KeyVault FW Exception
+        condition: always()
+        inputs:
+          azureSubscription: $(infra_arm_service_connection_dev)
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            $ip = (Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
+            az keyvault network-rule remove --name $env:keyVaultName --ip-address "$IP/32"
+        env:
+          keyVaultName: $(publicCertKVName_demo)
+
   - stage: Deploy_Demo_Environments
     condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/master'))
     dependsOn:
@@ -144,7 +218,7 @@ stages:
       - template: pipeline/terraform-deployment.yml
         parameters:
           name: ${{ variables.deploymentResource }}
-          vmImage: $(baseAgent)
+          vmImage: ${{ variables.baseAgent }}
 
           environments:
             - name: demo
@@ -169,6 +243,30 @@ stages:
                   displayName: Download SSH Public Key
                   inputs:
                     secureFile: $(sshKeyName)
+                - task: AzureCLI@2
+                  displayName: Add keyvault FW Exception
+                  inputs:
+                    azureSubscription: $(infra_arm_service_connection_dev)
+                    scriptType: pscore
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      $ip = (Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
+                      az keyvault network-rule add --name $env:keyVaultName --ip-address "$IP/32"
+                  env:
+                    keyVaultName: $(publicCertKVName_demo)
+              postSteps:
+                - task: AzureCLI@2
+                  displayName: Remove KeyVault FW Exception
+                  condition: always()
+                  inputs:
+                    azureSubscription: $(infra_arm_service_connection_dev)
+                    scriptType: pscore
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      $ip = (Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
+                      az keyvault network-rule remove --name $env:keyVaultName --ip-address "$IP/32"
+                  env:
+                    keyVaultName: $(publicCertKVName_demo)
 
   - stage: Plan_Preprod_Environments
     dependsOn:
@@ -176,7 +274,7 @@ stages:
     jobs:
     - job: Preprod_Plan
       pool:
-          vmImage: $(baseAgent)
+          vmImage: ${{ variables.baseAgent }}
 
       variables:
         - group: vh-infra-prod
@@ -192,6 +290,18 @@ stages:
         displayName: Download SSH Public Key
         inputs:
           secureFile: $(sshKeyName)
+      
+      - task: AzureCLI@2
+        displayName: Add keyvault FW Exception
+        inputs:
+          azureSubscription: $(infra_arm_service_connection_prod)
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            $ip = (Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
+            az keyvault network-rule add --name $env:keyVaultName --ip-address "$IP/32"
+        env:
+          keyVaultName: $(publicCertKVName_preprod)
 
       - template: pipeline/terraform-plan.yml
         parameters:
@@ -212,6 +322,19 @@ stages:
             service_certificate_kv_url: $(publicCertKVSecretUrl_preprod)
             key_vault_id: $(publicCertKVResourceId_preprod)
 
+      - task: AzureCLI@2
+        displayName: Remove KeyVault FW Exception
+        condition: always()
+        inputs:
+          azureSubscription: $(infra_arm_service_connection_prod)
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            $ip = (Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
+            az keyvault network-rule remove --name $env:keyVaultName --ip-address "$IP/32"
+        env:
+          keyVaultName: $(publicCertKVName_preprod)
+
   - stage: Deploy_Preprod_Environments
     condition: and(succeeded(), or(startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/')))
     dependsOn:
@@ -220,7 +343,7 @@ stages:
       - template: pipeline/terraform-deployment.yml
         parameters:
           name: ${{ variables.deploymentResource }}
-          vmImage: $(baseAgent)
+          vmImage: ${{ variables.baseAgent }}
 
           environments:
             - name: preprod
@@ -245,6 +368,30 @@ stages:
                   displayName: Download SSH Public Key
                   inputs:
                     secureFile: $(sshKeyName)
+                - task: AzureCLI@2
+                  displayName: Add keyvault FW Exception
+                  inputs:
+                    azureSubscription: $(infra_arm_service_connection_prod)
+                    scriptType: pscore
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      $ip = (Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
+                      az keyvault network-rule add --name $env:keyVaultName --ip-address "$IP/32"
+                  env:
+                    keyVaultName: $(publicCertKVName_preprod)
+              postSteps:
+                - task: AzureCLI@2
+                  displayName: Remove KeyVault FW Exception
+                  condition: always()
+                  inputs:
+                    azureSubscription: $(infra_arm_service_connection_prod)
+                    scriptType: pscore
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      $ip = (Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
+                      az keyvault network-rule remove --name $env:keyVaultName --ip-address "$IP/32"
+                  env:
+                    keyVaultName: $(publicCertKVName_preprod)
 
 
   - stage: Plan_Prod_Environments
@@ -253,7 +400,7 @@ stages:
     jobs:
     - job: Prod_Plan
       pool:
-          vmImage: $(baseAgent)
+          vmImage: ${{ variables.baseAgent }}
 
       variables:
         - group: vh-infra-prod
@@ -269,6 +416,18 @@ stages:
         displayName: Download SSH Public Key
         inputs:
           secureFile: $(sshKeyName)
+      
+      - task: AzureCLI@2
+        displayName: Add keyvault FW Exception
+        inputs:
+          azureSubscription: $(infra_arm_service_connection_prod)
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            $ip = (Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
+            az keyvault network-rule add --name $env:keyVaultName --ip-address "$IP/32"
+        env:
+          keyVaultName: $(publicCertKVName_prod)
 
       - template: pipeline/terraform-plan.yml
         parameters:
@@ -289,6 +448,19 @@ stages:
             service_certificate_kv_url: $(publicCertKVSecretUrl_prod)
             key_vault_id: $(publicCertKVResourceId_prod)
 
+      - task: AzureCLI@2
+        displayName: Remove KeyVault FW Exception
+        condition: always()
+        inputs:
+          azureSubscription: $(infra_arm_service_connection_prod)
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            $ip = (Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
+            az keyvault network-rule remove --name $env:keyVaultName --ip-address "$IP/32"
+        env:
+          keyVaultName: $(publicCertKVName_prod)
+
   - stage: Deploy_Prod_Environments
     condition: and(succeeded(), or(startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/')))
     dependsOn:
@@ -298,7 +470,7 @@ stages:
       - template: pipeline/terraform-deployment.yml
         parameters:
           name: ${{ variables.deploymentResource }}
-          vmImage: $(baseAgent)
+          vmImage: ${{ variables.baseAgent }}
 
           environments:
             - name: prod
@@ -323,3 +495,27 @@ stages:
                   displayName: Download SSH Public Key
                   inputs:
                     secureFile: $(sshKeyName)
+                - task: AzureCLI@2
+                  displayName: Add keyvault FW Exception
+                  inputs:
+                    azureSubscription: $(infra_arm_service_connection_prod)
+                    scriptType: pscore
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      $ip = (Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
+                      az keyvault network-rule add --name $env:keyVaultName --ip-address "$IP/32"
+                  env:
+                    keyVaultName: $(publicCertKVName_prod)
+              postSteps:
+                - task: AzureCLI@2
+                  displayName: Remove KeyVault FW Exception
+                  condition: always()
+                  inputs:
+                    azureSubscription: $(infra_arm_service_connection_prod)
+                    scriptType: pscore
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      $ip = (Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
+                      az keyvault network-rule remove --name $env:keyVaultName --ip-address "$IP/32"
+                  env:
+                    keyVaultName: $(publicCertKVName_prod)
