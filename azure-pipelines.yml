@@ -67,7 +67,7 @@ stages:
     jobs:
       - template: pipeline/terraform-deployment.yml
         parameters:
-          name: $(deploymentResource)
+          name: ${{ variables.deploymentResource }}
           vmImage: $(baseAgent)
 
           environments:
@@ -143,7 +143,7 @@ stages:
     jobs:
       - template: pipeline/terraform-deployment.yml
         parameters:
-          name: $(deploymentResource)
+          name: ${{ variables.deploymentResource }}
           vmImage: $(baseAgent)
 
           environments:
@@ -219,7 +219,7 @@ stages:
     jobs:
       - template: pipeline/terraform-deployment.yml
         parameters:
-          name: $(deploymentResource)
+          name: ${{ variables.deploymentResource }}
           vmImage: $(baseAgent)
 
           environments:
@@ -297,7 +297,7 @@ stages:
     jobs:
       - template: pipeline/terraform-deployment.yml
         parameters:
-          name: $(deploymentResource)
+          name: ${{ variables.deploymentResource }}
           vmImage: $(baseAgent)
 
           environments:
