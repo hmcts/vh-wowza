@@ -27,4 +27,4 @@ jobs:
               serviceConnections: ${{ deployment.serviceConnections }}
               tf_params: ${{ deployment.tf_params }}
               preSteps: ${{ deployment.preSteps }}
-              postSteps: ${{ deployment.preSteps }}
+              postSteps: ${{ deployment.postSteps }}
