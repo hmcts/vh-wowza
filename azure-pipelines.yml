@@ -41,7 +41,7 @@ stages:
         inputs:
           secureFile: $(sshKeyName)
 
-      - template: terraform-plan.yml
+      - template: pipeline/terraform-plan.yml
         parameters:
           storageAccount: $(infra_storage_account_dev)
           environment: $(environment)
@@ -65,7 +65,7 @@ stages:
     dependsOn:
       - Plan_Dev_Environments
     jobs:
-      - template: terraform-deployment.yml
+      - template: pipeline/terraform-deployment.yml
         parameters:
           name: $(deploymentResource)
           vmImage: $(baseAgent)
@@ -117,7 +117,7 @@ stages:
         inputs:
           secureFile: $(sshKeyName)
 
-      - template: terraform-plan.yml
+      - template: pipeline/terraform-plan.yml
         parameters:
           storageAccount: $(infra_storage_account_dev)
           environment: $(environment)
@@ -141,7 +141,7 @@ stages:
     dependsOn:
       - Plan_Demo_Environments
     jobs:
-      - template: terraform-deployment.yml
+      - template: pipeline/terraform-deployment.yml
         parameters:
           name: $(deploymentResource)
           vmImage: $(baseAgent)
@@ -193,7 +193,7 @@ stages:
         inputs:
           secureFile: $(sshKeyName)
 
-      - template: terraform-plan.yml
+      - template: pipeline/terraform-plan.yml
         parameters:
           storageAccount: $(infra_storage_account_prod)
           environment: $(environment)
@@ -217,7 +217,7 @@ stages:
     dependsOn:
       - Plan_Preprod_Environments
     jobs:
-      - template: terraform-deployment.yml
+      - template: pipeline/terraform-deployment.yml
         parameters:
           name: $(deploymentResource)
           vmImage: $(baseAgent)
@@ -270,7 +270,7 @@ stages:
         inputs:
           secureFile: $(sshKeyName)
 
-      - template: terraform-plan.yml
+      - template: pipeline/terraform-plan.yml
         parameters:
           storageAccount: $(infra_storage_account_prod)
           environment: $(environment)
@@ -295,7 +295,7 @@ stages:
       - Plan_Prod_Environments
       - Deploy_Preprod_Environments
     jobs:
-      - template: terraform-deployment.yml
+      - template: pipeline/terraform-deployment.yml
         parameters:
           name: $(deploymentResource)
           vmImage: $(baseAgent)
