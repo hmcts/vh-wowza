@@ -39,7 +39,11 @@ stages:
           displayName: Download SSH Public Key
           inputs:
             secureFile: $(sshKeyName)
-        - pwsh: |
-            Write-Host "##vso[task.setvariable variable=infra_arm_service_connection]$(infra_arm_service_connection_dev)"
-            Write-Host "##vso[task.setvariable variable=publicCertKVSecretUrl]$(publicCertKVSecretUrl_dev)"
-            Write-Host "##vso[task.setvariable variable=publicCertKVResourceId]$(publicCertKVResourceId_dev)"
+        - task: PowerShell@2
+          inputs:
+            targetType: inline
+            pwsh: true
+            script: |
+              Write-Host "##vso[task.setvariable variable=infra_arm_service_connection]$(infra_arm_service_connection_dev)"
+              Write-Host "##vso[task.setvariable variable=publicCertKVSecretUrl]$(publicCertKVSecretUrl_dev)"
+              Write-Host "##vso[task.setvariable variable=publicCertKVResourceId]$(publicCertKVResourceId_dev)"
