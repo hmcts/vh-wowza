@@ -3,20 +3,8 @@ parameters:
     type: string
     default: Ubuntu-16.04
 
-  - name: deploymentBranch
-    displayName: Branch to Deploy
-    type: string
-    default: refs/heads/master
-
   - name: deploymentResource
     type: string
-
-  - name: releaseParameters
-    type: object
-    default: {}
-
-  - name: environments
-    type: object
 
   - name: serviceConnections
     type: object
@@ -29,7 +17,6 @@ parameters:
     default: []
 
 stages:
-- ${{ if or(eq(variables['Build.Reason'], 'ResourceTrigger'), containsValue(parameters.environments, 'Dev')) }}:
   - stage: Plan_Dev_Environments
     jobs:
     - job: Dev_Plan
@@ -57,6 +44,7 @@ stages:
           tf_params: ${{ parameters.tf_params }}
 
   - stage: Deploy_Dev_Environments
+    condition: and(succeeded(), or(startsWith(variables['Build.SourceBranch'], 'refs/heads/master')))
     dependsOn:
       - Plan_Dev_Environments
     jobs:
@@ -69,11 +57,9 @@ stages:
             - name: dev
               storageAccount: $(infra_storage_account_dev)
               serviceConnections: ${{ parameters.serviceConnections }}
-              deploymentBranch: ${{ parameters.deploymentBranch }}
               tf_params: ${{ parameters.tf_params }}
               preSteps: ${{ parameters.preSteps }}
 
-- ${{ if containsValue(parameters.environments, 'Demo') }}:
   - stage: Plan_Demo_Environments
     dependsOn:
       - Plan_Dev_Environments
@@ -103,6 +89,7 @@ stages:
           tf_params: ${{ parameters.tf_params }}
 
   - stage: Deploy_Demo_Environments
+    condition: and(succeeded(), or(startsWith(variables['Build.SourceBranch'], 'refs/heads/master')))
     dependsOn:
       - Plan_Demo_Environments
     jobs:
@@ -115,11 +102,9 @@ stages:
             - name: demo
               storageAccount: $(infra_storage_account_dev)
               serviceConnections: ${{ parameters.serviceConnections }}
-              deploymentBranch: ${{ parameters.deploymentBranch }}
               tf_params: ${{ parameters.tf_params }}
               preSteps: ${{ parameters.preSteps }}
 
-- ${{ if or(eq(variables['Build.Reason'], 'ResourceTrigger'), and(containsValue(parameters.environments, 'Preprod'), or(startsWith(parameters.deploymentBranch, 'refs/heads/release/'), startsWith(parameters.deploymentBranch, 'refs/heads/hotfix/')))) }}:
   - stage: Plan_Preprod_Environments
     dependsOn:
       - Plan_Dev_Environments
@@ -149,6 +134,7 @@ stages:
           tf_params: ${{ parameters.tf_params }}
 
   - stage: Deploy_Preprod_Environments
+    condition: and(succeeded(), or(startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/')))
     dependsOn:
       - Plan_Preprod_Environments
     jobs:
@@ -161,11 +147,10 @@ stages:
             - name: preprod
               storageAccount: $(infra_storage_account_prod)
               serviceConnections: ${{ parameters.serviceConnections }}
-              deploymentBranch: ${{ parameters.deploymentBranch }}
               tf_params: ${{ parameters.tf_params }}
               preSteps: ${{ parameters.preSteps }}
 
-- ${{ if or(eq(variables['Build.Reason'], 'ResourceTrigger'), and(containsValue(parameters.environments, 'Prod'), or(startsWith(parameters.deploymentBranch, 'refs/heads/release/'), startsWith(parameters.deploymentBranch, 'refs/heads/hotfix/')))) }}:
+
   - stage: Plan_Prod_Environments
     dependsOn:
       - Plan_Dev_Environments
@@ -195,6 +180,7 @@ stages:
           tf_params: ${{ parameters.tf_params }}
 
   - stage: Deploy_Prod_Environments
+    condition: and(succeeded(), or(startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/')))
     dependsOn:
       - Plan_Prod_Environments
       - Deploy_Preprod_Environments
@@ -208,6 +194,5 @@ stages:
             - name: prod
               storageAccount: $(infra_storage_account_prod)
               serviceConnections: ${{ parameters.serviceConnections }}
-              deploymentBranch: ${{ parameters.deploymentBranch }}
               tf_params: ${{ parameters.tf_params }}
               preSteps: ${{ parameters.preSteps }}
