@@ -20,10 +20,7 @@ stages:
     parameters:
       deploymentResource: vh_wowza
       serviceConnections:
-        ${{ if or(eq('Dev', parameters.environment),eq('Demo', parameters.environment)) }}:
-          arm: $(infra_arm_service_connection_dev)
-        ${{ if or(eq('Preprod', parameters.environment),eq('Prod', parameters.environment)) }}:
-          arm: $(infra_arm_service_connection_prod)
+        arm: $(infra_arm_service_connection)
         dns: $(infra_arm_service_connection_prod)
       tf_params:
         dns_tenant_id: $(dns_Tenant_Id)
@@ -34,21 +31,15 @@ stages:
         dns_resource_group: $(publicDnsZoneResourceGroup)
         admin_ssh_key_path: $(sshPubKey.secureFilePath)
         service_certificate_thumbprint: $(publicCertThumbprint)
-        ${{ if eq('Dev', parameters.environment) }}:
-          service_certificate_kv_url: $(publicCertKVSecretUrl_dev)
-          key_vault_id: $(publicCertKVResourceId_dev)
-        ${{ if eq('Demo', parameters.environment) }}:
-          service_certificate_kv_url: $(publicCertKVSecretUrl_demo)
-          key_vault_id: $(publicCertKVResourceId_demo)
-        ${{ if eq('Preprod', parameters.environment) }}:
-          service_certificate_kv_url: $(publicCertKVSecretUrl_preprod)
-          key_vault_id: $(publicCertKVResourceId_preprod)
-        ${{ if eq('Prod', parameters.environment) }}:
-          service_certificate_kv_url: $(publicCertKVSecretUrl_prod)
-          key_vault_id: $(publicCertKVResourceId_prod)
+        service_certificate_kv_url: $(publicCertKVSecretUrl)
+        key_vault_id: $(publicCertKVResourceId)
       preSteps:
         - task: DownloadSecureFile@1
           name: sshPubKey
           displayName: Download SSH Public Key
           inputs:
             secureFile: $(sshKeyName)
+        - pwsh: |
+            Write-Host "##vso[task.setvariable variable=infra_arm_service_connection]$(infra_arm_service_connection_dev)"
+            Write-Host "##vso[task.setvariable variable=publicCertKVSecretUrl]$(publicCertKVSecretUrl_dev)"
+            Write-Host "##vso[task.setvariable variable=publicCertKVResourceId]$(publicCertKVResourceId_dev)"
