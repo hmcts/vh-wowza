@@ -5,6 +5,7 @@ parameters:
   environment: ""
   tf_params:
   preSteps: []
+  postSteps: []
 
 steps:
   - ${{ each step in parameters.preSteps }}:
@@ -60,3 +61,7 @@ steps:
         az storage account network-rule remove --account-name $env:storageAccount --ip-address "$IP"
     env:
       storageAccount: ${{ parameters.storageAccount }}
+
+  - ${{ each step in parameters.postSteps }}:
+      - ${{ each pair in step }}:
+          ${{ pair.key }}: ${{ pair.value }}
