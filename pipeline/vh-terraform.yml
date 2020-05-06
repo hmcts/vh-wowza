@@ -42,7 +42,7 @@ stages:
           tf_params: ${{ parameters.tf_params }}
 
   - stage: Deploy_Dev_Environments
-    condition: and(succeeded(), or(startsWith(variables['Build.SourceBranch'], 'refs/heads/master')))
+    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/master'))
     dependsOn:
       - Plan_Dev_Environments
     jobs:
@@ -85,7 +85,7 @@ stages:
           tf_params: ${{ parameters.tf_params }}
 
   - stage: Deploy_Demo_Environments
-    condition: and(succeeded(), or(startsWith(variables['Build.SourceBranch'], 'refs/heads/master')))
+    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/master'))
     dependsOn:
       - Plan_Demo_Environments
     jobs:
