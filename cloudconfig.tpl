@@ -5,9 +5,21 @@ package_upgrade: true
 packages:
   - blobfuse
   - fuse
+device_aliases: {'ephemeral0': '/dev/sdb','datadisk': '/dev/sdc1'}
+disk_setup:
+  /dev/disk/azure/scsi1/lun10:
+    table_type: gpt
+    layout: true
+    overwrite: true
+fs_setup:
+  - device: /dev/disk/azure/scsi1/lun10
+    partition: 1
+    filesystem: ext4
+mounts:
+    - ["/dev/disk/azure/scsi1/lun10-part1", "/wowzadata", auto, "defaults,noexec,nofail"]
 write_files:
   - owner: wowza:wowza
-    path: /usr/local/WowzaStreamingEngine/conf/Server.xml
+    path: /wowzadata/WowzaStreamingEngine/conf/Server.xml
     content: |
       <?xml version="1.0" encoding="UTF-8"?>
       <Root version="2">
@@ -125,7 +137,7 @@ write_files:
               </Server>
       </Root>
   - owner: wowza:wowza
-    path: /usr/local/WowzaStreamingEngine/conf/VHost.xml
+    path: /wowzadata/WowzaStreamingEngine/conf/VHost.xml
     content: |
       <?xml version="1.0" encoding="UTF-8"?>
       <Root version="2">
@@ -434,40 +446,106 @@ write_files:
       #
       # By default this script does nothing.
 
-      sudo bash /home/wowza/mount.sh /usr/local/WowzaStreamingEngine/content/azurecopy
+      sudo bash /home/wowza/mount.sh /wowzadata/azurecopy
 
       exit 0
   - owner: wowza:wowza
     path: /home/wowza/mount.sh
     content: |
       #!/bin/bash
-      blobfuse $1 --tmp-path=/mnt/blobfusetmp -o attr_timeout=240 -o entry_timeout=240 -o negative_timeout=120 --config-file=/home/wowza/connection.cfg -o allow_other -o nonempty
+      blobfuse $1 --tmp-path=/wowzadata/blobfusetmp -o attr_timeout=240 -o entry_timeout=240 -o negative_timeout=120 --config-file=/home/wowza/connection.cfg -o allow_other -o nonempty
   - owner: wowza:wowza
     path: /home/wowza/connection.cfg
     content: |
       accountName ${storageAccountName}
-      accountKey ${storageAccountKey}
-      containerName recordings
+      containerName ${storageContainerName}
+      authType MSI
+      identityResourceId ${msiClientId}
   - owner: wowza:wowza
-    path: /usr/local/WowzaStreamingEngine/conf/admin.password
+    path: /home/wowza/migrateWowzaToDisk.sh
+    content: |
+      service WowzaStreamingEngine stop
+      mkdir -p /wowzadata/blobfusetmp
+      mkdir -p /wowzadata/azurecopy
+      mkdir -p /wowzadata/WowzaStreamingEngine/applications
+      mkdir -p /wowzadata/WowzaStreamingEngine/content
+      mkdir -p /wowzadata/WowzaStreamingEngine/conf
+
+      cp -f /usr/local/WowzaStreamingEngine/conf/Admin.guid /wowzadata/WowzaStreamingEngine/conf/Admin.guid
+      chmod --reference=/usr/local/WowzaStreamingEngine/conf/Admin.guid /wowzadata/WowzaStreamingEngine/conf/Admin.guid
+      chown --reference=/usr/local/WowzaStreamingEngine/conf/Admin.guid /wowzadata/WowzaStreamingEngine/conf/Admin.guid
+      cp -f /usr/local/WowzaStreamingEngine/conf/Application.xml /wowzadata/WowzaStreamingEngine/conf/Application.xml
+      chmod --reference=/usr/local/WowzaStreamingEngine/conf/Application.xml /wowzadata/WowzaStreamingEngine/conf/Application.xml
+      chown --reference=/usr/local/WowzaStreamingEngine/conf/Application.xml /wowzadata/WowzaStreamingEngine/conf/Application.xml
+      cp -f /usr/local/WowzaStreamingEngine/conf/clientaccesspolicy.xml /wowzadata/WowzaStreamingEngine/conf/clientaccesspolicy.xml
+      chmod --reference=/usr/local/WowzaStreamingEngine/conf/clientaccesspolicy.xml /wowzadata/WowzaStreamingEngine/conf/clientaccesspolicy.xml
+      chown --reference=/usr/local/WowzaStreamingEngine/conf/clientaccesspolicy.xml /wowzadata/WowzaStreamingEngine/conf/clientaccesspolicy.xml
+      cp -f /usr/local/WowzaStreamingEngine/conf/crossdomain.xml /wowzadata/WowzaStreamingEngine/conf/crossdomain.xml
+      chmod --reference=/usr/local/WowzaStreamingEngine/conf/crossdomain.xml /wowzadata/WowzaStreamingEngine/conf/crossdomain.xml
+      chown --reference=/usr/local/WowzaStreamingEngine/conf/crossdomain.xml /wowzadata/WowzaStreamingEngine/conf/crossdomain.xml
+      cp -f /usr/local/WowzaStreamingEngine/conf/jmxremote.access /wowzadata/WowzaStreamingEngine/conf/jmxremote.access
+      chmod --reference=/usr/local/WowzaStreamingEngine/conf/jmxremote.access /wowzadata/WowzaStreamingEngine/conf/jmxremote.access
+      chown --reference=/usr/local/WowzaStreamingEngine/conf/jmxremote.access /wowzadata/WowzaStreamingEngine/conf/jmxremote.access
+      cp -f /usr/local/WowzaStreamingEngine/conf/jmxremote.password /wowzadata/WowzaStreamingEngine/conf/jmxremote.password
+      chmod --reference=/usr/local/WowzaStreamingEngine/conf/jmxremote.password /wowzadata/WowzaStreamingEngine/conf/jmxremote.password
+      chown --reference=/usr/local/WowzaStreamingEngine/conf/jmxremote.password /wowzadata/WowzaStreamingEngine/conf/jmxremote.password
+      cp -f /usr/local/WowzaStreamingEngine/conf/LicenseDomainCache.properties /wowzadata/WowzaStreamingEngine/conf/LicenseDomainCache.properties
+      chmod --reference=/usr/local/WowzaStreamingEngine/conf/LicenseDomainCache.properties /wowzadata/WowzaStreamingEngine/conf/LicenseDomainCache.properties
+      chown --reference=/usr/local/WowzaStreamingEngine/conf/LicenseDomainCache.properties /wowzadata/WowzaStreamingEngine/conf/LicenseDomainCache.properties
+      cp -f /usr/local/WowzaStreamingEngine/conf/log4j.properties /wowzadata/WowzaStreamingEngine/conf/log4j.properties
+      chmod --reference=/usr/local/WowzaStreamingEngine/conf/log4j.properties /wowzadata/WowzaStreamingEngine/conf/log4j.properties
+      chown --reference=/usr/local/WowzaStreamingEngine/conf/log4j.properties /wowzadata/WowzaStreamingEngine/conf/log4j.properties
+      cp -f /usr/local/WowzaStreamingEngine/conf/MediaCache.xml /wowzadata/WowzaStreamingEngine/conf/MediaCache.xml
+      chmod --reference=/usr/local/WowzaStreamingEngine/conf/MediaCache.xml /wowzadata/WowzaStreamingEngine/conf/MediaCache.xml
+      chown --reference=/usr/local/WowzaStreamingEngine/conf/MediaCache.xml /wowzadata/WowzaStreamingEngine/conf/MediaCache.xml
+      cp -f /usr/local/WowzaStreamingEngine/conf/PushPublishMap.txt /wowzadata/WowzaStreamingEngine/conf/PushPublishMap.txt
+      chmod --reference=/usr/local/WowzaStreamingEngine/conf/PushPublishMap.txt /wowzadata/WowzaStreamingEngine/conf/PushPublishMap.txt
+      chown --reference=/usr/local/WowzaStreamingEngine/conf/PushPublishMap.txt /wowzadata/WowzaStreamingEngine/conf/PushPublishMap.txt
+      cp -f /usr/local/WowzaStreamingEngine/conf/PushPublishProfilesCustom.xml /wowzadata/WowzaStreamingEngine/conf/PushPublishProfilesCustom.xml
+      chmod --reference=/usr/local/WowzaStreamingEngine/conf/PushPublishProfilesCustom.xml /wowzadata/WowzaStreamingEngine/conf/PushPublishProfilesCustom.xml
+      chown --reference=/usr/local/WowzaStreamingEngine/conf/PushPublishProfilesCustom.xml /wowzadata/WowzaStreamingEngine/conf/PushPublishProfilesCustom.xml
+      cp -f /usr/local/WowzaStreamingEngine/conf/Server.guid /wowzadata/WowzaStreamingEngine/conf/Server.guid
+      chmod --reference=/usr/local/WowzaStreamingEngine/conf/Server.guid /wowzadata/WowzaStreamingEngine/conf/Server.guid
+      chown --reference=/usr/local/WowzaStreamingEngine/conf/Server.guid /wowzadata/WowzaStreamingEngine/conf/Server.guid
+      cp -f /usr/local/WowzaStreamingEngine/conf/Server.license /wowzadata/WowzaStreamingEngine/conf/Server.license
+      chmod --reference=/usr/local/WowzaStreamingEngine/conf/Server.license /wowzadata/WowzaStreamingEngine/conf/Server.license
+      chown --reference=/usr/local/WowzaStreamingEngine/conf/Server.license /wowzadata/WowzaStreamingEngine/conf/Server.license
+      cp -f /usr/local/WowzaStreamingEngine/conf/StartupStreams.xml /wowzadata/WowzaStreamingEngine/conf/StartupStreams.xml
+      chmod --reference=/usr/local/WowzaStreamingEngine/conf/StartupStreams.xml /wowzadata/WowzaStreamingEngine/conf/StartupStreams.xml
+      chown --reference=/usr/local/WowzaStreamingEngine/conf/StartupStreams.xml /wowzadata/WowzaStreamingEngine/conf/StartupStreams.xml
+      cp -f /usr/local/WowzaStreamingEngine/conf/Tune.xml /wowzadata/WowzaStreamingEngine/conf/Tune.xml
+      chmod --reference=/usr/local/WowzaStreamingEngine/conf/Tune.xml /wowzadata/WowzaStreamingEngine/conf/Tune.xml
+      chown --reference=/usr/local/WowzaStreamingEngine/conf/Tune.xml /wowzadata/WowzaStreamingEngine/conf/Tune.xml
+      cp -f /usr/local/WowzaStreamingEngine/conf/VHosts.xml /wowzadata/WowzaStreamingEngine/conf/VHosts.xml
+      chmod --reference=/usr/local/WowzaStreamingEngine/conf/VHosts.xml /wowzadata/WowzaStreamingEngine/conf/VHosts.xml
+      chown --reference=/usr/local/WowzaStreamingEngine/conf/VHosts.xml /wowzadata/WowzaStreamingEngine/conf/VHosts.xml
+
+      rm -rf /usr/local/WowzaStreamingEngine/applications
+      ln -sf /wowzadata/WowzaStreamingEngine/applications/ /usr/local/WowzaStreamingEngine
+      rm -rf /usr/local/WowzaStreamingEngine/content
+      ln -sf /wowzadata/WowzaStreamingEngine/content/ /usr/local/WowzaStreamingEngine
+      rm -rf /usr/local/WowzaStreamingEngine/conf
+      ln -sf /wowzadata/WowzaStreamingEngine/conf/ /usr/local/WowzaStreamingEngine
+
+      bash /home/wowza/mount.sh /wowzadata/azurecopy
+      service WowzaStreamingEngine start
+  - owner: wowza:wowza
+    path: /wowzadata/WowzaStreamingEngine/conf/admin.password
     content: |
       # Admin password file (format [username][space][password])
       #username password group|group
       wowza ${restPassword} admin
   - owner: wowza:wowza
-    path: /usr/local/WowzaStreamingEngine/conf/publish.password
+    path: /wowzadata/WowzaStreamingEngine/conf/publish.password
     content: |
       # Publish password file (format [username][space][password])
       #username password
       wowza ${streamPassword}
 runcmd:
-  - 'sudo mkdir /mnt/blobfusetmp'
-  - 'sudo mkdir /usr/local/WowzaStreamingEngine/content/azurecopy'
   - 'secretsname=$(find /var/lib/waagent/ -name "${certThumbprint}.prv" | cut -c -57)'
   - 'openssl pkcs12 -export -out $secretsname.pfx -inkey $secretsname.prv -in $secretsname.crt -passin pass: -passout pass:${certPassword}'
   - 'export PATH=$PATH:/usr/local/WowzaStreamingEngine/java/bin'
-  - 'keytool -importkeystore -srckeystore $secretsname.pfx -srcstoretype pkcs12 -destkeystore /usr/local/WowzaStreamingEngine/conf/ssl.wowza.jks -deststoretype JKS -deststorepass ${certPassword} -srcstorepass ${certPassword}'
-  - 'sudo bash /home/wowza/mount.sh /usr/local/WowzaStreamingEngine/content/azurecopy'
-  - 'service WowzaStreamingEngine restart'
+  - 'keytool -importkeystore -srckeystore $secretsname.pfx -srcstoretype pkcs12 -destkeystore /wowzadata/WowzaStreamingEngine/conf/ssl.wowza.jks -deststoretype JKS -deststorepass ${certPassword} -srcstorepass ${certPassword}'
+  - 'bash /home/wowza/migrateWowzaToDisk.sh'
 
 final_message: "The system is finally up, after $UPTIME seconds"
