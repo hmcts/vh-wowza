@@ -1,8 +1,3 @@
-output "public_ip_address" {
-  description = "Public IP of the Wowza VM"
-  value       = azurerm_public_ip.wowza.ip_address
-}
-
 output "vnet_id" {
   description = ""
   value       = azurerm_virtual_network.wowza.id
