@@ -35,3 +35,19 @@ resource "azurerm_network_interface_backend_address_pool_association" "wowza_vm"
   ip_configuration_name   = "wowzaConfiguration"
   backend_address_pool_id = azurerm_lb_backend_address_pool.wowza_vm[count.index].id
 }
+
+resource "azurerm_network_interface_backend_address_pool_association" "wowza-public" {
+  count = var.wowza_instance_count
+
+  network_interface_id    = azurerm_network_interface.wowza[count.index].id
+  ip_configuration_name   = "wowzaConfiguration"
+  backend_address_pool_id = azurerm_lb_backend_address_pool.wowza-public.id
+}
+
+resource "azurerm_network_interface_backend_address_pool_association" "wowza_vm-public" {
+  count = var.wowza_instance_count
+
+  network_interface_id    = azurerm_network_interface.wowza[count.index].id
+  ip_configuration_name   = "wowzaConfiguration"
+  backend_address_pool_id = azurerm_lb_backend_address_pool.wowza_vm-public[count.index].id
+}

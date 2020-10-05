@@ -12,3 +12,7 @@ output "stream_password" {
   description = ""
   value       = random_password.streamPassword.result
 }
+
+output "public_ip_address" {
+  value = azurerm_public_ip.wowza.ip_address
+}

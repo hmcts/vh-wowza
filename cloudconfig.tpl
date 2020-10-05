@@ -454,18 +454,18 @@ write_files:
                         <!--
                                 StorageDir path variables
 
-                                ${com.wowza.wms.AppHome} - Application home directory
-                                ${com.wowza.wms.ConfigHome} - Configuration home directory
-                                ${com.wowza.wms.context.VHost} - Virtual host name
-                                ${com.wowza.wms.context.VHostConfigHome} - Virtual host home directory
-                                ${com.wowza.wms.context.Application} - Application name
-                                ${com.wowza.wms.context.ApplicationInstance} - Application instance name
+                                $${com.wowza.wms.AppHome} - Application home directory
+                                $${com.wowza.wms.ConfigHome} - Configuration home directory
+                                $${com.wowza.wms.context.VHost} - Virtual host name
+                                $${com.wowza.wms.context.VHostConfigHome} - Virtual host home directory
+                                $${com.wowza.wms.context.Application} - Application name
+                                $${com.wowza.wms.context.ApplicationInstance} - Application instance name
 
                         -->
                         <Streams>
                                 <StreamType>default</StreamType>
-                                <StorageDir>${com.wowza.wms.context.VHostConfigHome}/content</StorageDir>
-                                <KeyDir>${com.wowza.wms.context.VHostConfigHome}/keys</KeyDir>
+                                <StorageDir>$${com.wowza.wms.context.VHostConfigHome}/content</StorageDir>
+                                <KeyDir>$${com.wowza.wms.context.VHostConfigHome}/keys</KeyDir>
                                 <!-- LiveStreamPacketizers (separate with commas): cupertinostreamingpacketizer, smoothstreamingpacketizer, sanjosestreamingpacketizer, mpegdashstreamingpacketizer, cupertinostreamingrepeater, smoothstreamingrepeater, sanjosestreamingrepeater, mpegdashstreamingrepeater, dvrstreamingpacketizer, dvrstreamingrepeater -->
                                 <LiveStreamPacketizers></LiveStreamPacketizers>
                                 <!-- Properties defined here will override any properties defined in conf/Streams.xml for any streams types loaded by this application -->
@@ -475,10 +475,10 @@ write_files:
                         <Transcoder>
                                 <!-- To turn on transcoder set to: transcoder -->
                                 <LiveStreamTranscoder></LiveStreamTranscoder>
-                                <!-- [templatename].xml or ${SourceStreamName}.xml -->
-                                <Templates>${SourceStreamName}.xml,transrate.xml</Templates>
-                                <ProfileDir>${com.wowza.wms.context.VHostConfigHome}/transcoder/profiles</ProfileDir>
-                                <TemplateDir>${com.wowza.wms.context.VHostConfigHome}/transcoder/templates</TemplateDir>
+                                <!-- [templatename].xml or $${SourceStreamName}.xml -->
+                                <Templates>$${SourceStreamName}.xml,transrate.xml</Templates>
+                                <ProfileDir>$${com.wowza.wms.context.VHostConfigHome}/transcoder/profiles</ProfileDir>
+                                <TemplateDir>$${com.wowza.wms.context.VHostConfigHome}/transcoder/templates</TemplateDir>
                                 <Properties>
                                 </Properties>
                         </Transcoder>
@@ -501,7 +501,7 @@ write_files:
                                 <WindowDuration>0</WindowDuration>
 
                                 <!-- Storage Directory is top level location where dvr is stored.  e.g. c:/temp/dvr -->
-                                <StorageDir>${com.wowza.wms.context.VHostConfigHome}/dvr</StorageDir>
+                                <StorageDir>$${com.wowza.wms.context.VHostConfigHome}/dvr</StorageDir>
 
                                 <!-- valid ArchiveStrategy values are append, version, delete -->
                                 <ArchiveStrategy>append</ArchiveStrategy>
@@ -526,7 +526,7 @@ write_files:
                                 <MediaCacheSourceList></MediaCacheSourceList>
                         </MediaCache>
                         <SharedObjects>
-                                <StorageDir>${com.wowza.wms.context.VHostConfigHome}/applications/${com.wowza.wms.context.Application}/sharedobjects/${com.wowza.wms.context.ApplicationInstance}</StorageDir>
+                                <StorageDir>$${com.wowza.wms.context.VHostConfigHome}/applications/$${com.wowza.wms.context.Application}/sharedobjects/$${com.wowza.wms.context.ApplicationInstance}</StorageDir>
                         </SharedObjects>
                         <Client>
                                 <IdleFrequency>-1</IdleFrequency>
@@ -648,7 +648,7 @@ write_files:
                                 <Properties>
                                         <Property>
                                                                                 <Name>streamRecorderFileVersionTemplate</Name>
-                                                                <Value>${SourceStreamName}_${RecordingStartTime}_${SegmentNumber}</Value>
+                                                                <Value>$${SourceStreamName}_$${RecordingStartTime}_$${SegmentNumber}</Value>
                                                                                 <Type>String</Type>
                                                                 </Property>
                                                                 <Property>
@@ -744,6 +744,12 @@ write_files:
       mkdir -p /wowzadata/blobfusetmp
       mkdir -p /wowzadata/azurecopy
 
+      cp /home/wowza/WowzaStreamingEngine/conf/Server.xml /usr/local/WowzaStreamingEngine/conf/Server.xml
+      cp /home/wowza/WowzaStreamingEngine/conf/VHost.xml /usr/local/WowzaStreamingEngine/conf/VHost.xml
+      cp /home/wowza/WowzaStreamingEngine/conf/Application.xml /usr/local/WowzaStreamingEngine/conf/Application.xml
+      cp /home/wowza/WowzaStreamingEngine/conf/admin.password /usr/local/WowzaStreamingEngine/conf/admin.password
+      cp /home/wowza/WowzaStreamingEngine/conf/publish.password /usr/local/WowzaStreamingEngine/conf/publish.password
+
       bash /home/wowza/mount.sh /wowzadata/azurecopy /home/wowza/recordings.cfg /wowzadata/blobfusetmp
 
       service WowzaStreamingEngine start
@@ -766,7 +772,7 @@ runcmd:
   - 'secretsname=$(find /var/lib/waagent/ -name "${certThumbprint}.prv" | cut -c -57)'
   - 'openssl pkcs12 -export -out $secretsname.pfx -inkey $secretsname.prv -in $secretsname.crt -passin pass: -passout pass:${certPassword}'
   - 'export PATH=$PATH:/usr/local/WowzaStreamingEngine/java/bin'
-  - 'keytool -importkeystore -srckeystore $secretsname.pfx -srcstoretype pkcs12 -destkeystore /wowzadata/WowzaStreamingEngine/conf/ssl.wowza.jks -deststoretype JKS -deststorepass ${certPassword} -srcstorepass ${certPassword}'
+  - 'keytool -importkeystore -srckeystore $secretsname.pfx -srcstoretype pkcs12 -destkeystore /usr/local/WowzaStreamingEngine/conf/ssl.wowza.jks -deststoretype JKS -deststorepass ${certPassword} -srcstorepass ${certPassword}'
   - 'service WowzaStreamingEngine restart'
 
 final_message: "The system is finally up, after $UPTIME seconds"

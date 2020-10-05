@@ -9,12 +9,12 @@ module "wowza" {
   storage_msi_client_id          = lookup(var.workspace_to_storage_msi_map, terraform.workspace, "")
 }
 
-# resource "azurerm_dns_a_record" "wowza" {
-#   provider = azurerm.dns
+resource "azurerm_dns_a_record" "wowza" {
+  provider = azurerm.dns
 
-#   name                = "vh-wowza-${terraform.workspace}"
-#   zone_name           = var.dns_zone_name
-#   resource_group_name = var.dns_resource_group
-#   ttl                 = 300
-#   records             = [module.wowza.public_ip_address]
-# }
+  name                = "vh-wowza-${terraform.workspace}"
+  zone_name           = var.dns_zone_name
+  resource_group_name = var.dns_resource_group
+  ttl                 = 300
+  records             = [module.wowza.public_ip_address]
+}

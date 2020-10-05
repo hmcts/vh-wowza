@@ -42,12 +42,12 @@ resource "azurerm_linux_virtual_machine" "wowza" {
   source_image_reference {
     publisher = "wowza"
     offer     = "wowzastreamingengine"
-    sku       = "linux-paid"
-    version   = "4.8.0"
+    sku       = "linux-paid-4-8"
+    version   = "latest"
   }
 
   plan {
-    name      = "linux-paid"
+    name      = "linux-paid-4-8"
     product   = "wowzastreamingengine"
     publisher = "wowza"
   }
