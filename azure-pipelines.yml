@@ -177,6 +177,7 @@ stages:
             az keyvault network-rule add --name $env:keyVaultName --ip-address "$IP/32"
         env:
           keyVaultName: $(publicCertKVName_demo)
+    
 
       - template: pipeline/terraform-plan.yml
         parameters:

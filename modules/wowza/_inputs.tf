@@ -49,3 +49,13 @@ variable "cloud_init_file" {
   type        = string
   default     = "./cloudconfig.tpl"
 }
+
+variable "wowza_instance_count" {
+  type    = number
+  default = 2
+}
+
+variable "storage_msi_client_id" {
+  type    = string
+  default = ""
+}

@@ -4,8 +4,11 @@ terraform {
     key            = "wowza/vh-wowza.tfstate"
   }
 
-  required_version = ">= 0.12"
+  required_version = ">= 0.13"
   required_providers {
-    azurerm = ">= 2.7.0"
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = ">= 2.7.0"
+    }
   }
 }
