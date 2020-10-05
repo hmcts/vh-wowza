@@ -53,6 +53,11 @@ stages:
         env:
           keyVaultName: $(publicCertKVName_dev)
 
+      - task: TerraformInstaller@0
+        displayName: Install Terraform 0.13.2
+        inputs:
+          terraformVersion: 0.13.2
+
       - template: pipeline/terraform-plan.yml
         parameters:
           storageAccount: $(infra_storage_account_dev)
@@ -177,6 +182,11 @@ stages:
             az keyvault network-rule add --name $env:keyVaultName --ip-address "$IP/32"
         env:
           keyVaultName: $(publicCertKVName_demo)
+      
+      - task: TerraformInstaller@0
+        displayName: Install Terraform 0.13.2
+        inputs:
+          terraformVersion: 0.13.2
 
       - template: pipeline/terraform-plan.yml
         parameters:
@@ -303,6 +313,11 @@ stages:
         env:
           keyVaultName: $(publicCertKVName_preprod)
 
+      - task: TerraformInstaller@0
+        displayName: Install Terraform 0.13.2
+        inputs:
+          terraformVersion: 0.13.2
+
       - template: pipeline/terraform-plan.yml
         parameters:
           storageAccount: $(infra_storage_account_prod)
@@ -428,6 +443,11 @@ stages:
             az keyvault network-rule add --name $env:keyVaultName --ip-address "$IP/32"
         env:
           keyVaultName: $(publicCertKVName_prod)
+
+      - task: TerraformInstaller@0
+        displayName: Install Terraform 0.13.2
+        inputs:
+          terraformVersion: 0.13.2
 
       - template: pipeline/terraform-plan.yml
         parameters:
