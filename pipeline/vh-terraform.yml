@@ -1,7 +1,7 @@
 parameters:
   - name: baseAgent
     type: string
-    default: Ubuntu-16.04
+    default: ubuntu-latest
 
   - name: deploymentResource
     type: string
