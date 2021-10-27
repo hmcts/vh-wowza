@@ -5,7 +5,8 @@ variables:
   - name: deploymentResource
     value: vh_wowza
   - name: baseAgent
-    value: Ubuntu-18.04
+    value: ubuntu-latest
+
 
 trigger:
   branches:
@@ -177,7 +178,7 @@ stages:
             az keyvault network-rule add --name $env:keyVaultName --ip-address "$IP/32"
         env:
           keyVaultName: $(publicCertKVName_demo)
-    
+
 
       - template: pipeline/terraform-plan.yml
         parameters:
@@ -291,7 +292,7 @@ stages:
         displayName: Download SSH Public Key
         inputs:
           secureFile: $(sshKeyName)
-      
+
       - task: AzureCLI@2
         displayName: Add keyvault FW Exception
         inputs:
@@ -417,7 +418,7 @@ stages:
         displayName: Download SSH Public Key
         inputs:
           secureFile: $(sshKeyName)
-      
+
       - task: AzureCLI@2
         displayName: Add keyvault FW Exception
         inputs:
