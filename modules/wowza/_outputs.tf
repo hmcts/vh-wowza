@@ -6,11 +6,13 @@ output "vnet_id" {
 output "rest_password" {
   description = ""
   value       = random_password.restPassword.result
+  sensitive = true
 }
 
 output "stream_password" {
   description = ""
   value       = random_password.streamPassword.result
+  sensitive = true
 }
 
 output "public_ip_address" {

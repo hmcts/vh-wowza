@@ -7,6 +7,7 @@ variables:
   - name: baseAgent
     value: ubuntu-latest
 
+
 trigger:
   branches:
     include:

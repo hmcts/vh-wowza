@@ -58,6 +58,11 @@ resource "azurerm_linux_virtual_machine" "wowza" {
       var.storage_msi_client_id
     ]
   }
+
+  boot_diagnostics {
+    storage_account_uri = "https://vhcoreinfradev.blob.core.windows.net/"
+  }
+
 }
 
 resource "azurerm_managed_disk" "wowza_data" {
