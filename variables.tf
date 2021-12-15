@@ -19,3 +19,14 @@ variable "workspace_to_storage_msi_map" {
     demo    = "/subscriptions/705b2731-0e0b-4df7-8630-95f157f0a347/resourceGroups/managed-identities-vh-vh-dev-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/wowza-storage-demo"
   }
 }
+
+variable "workspace_to_boot_diag_storage_map"{
+    type = map(string)
+  default = {
+    prod    = "https://vhcoreinfrapreprod.blob.core.windows.net/"
+    preprod = "https://vhcoreinfrapreprod.blob.core.windows.net/"
+    dev     = "https://vhcoreinfradev.blob.core.windows.net/"
+    test    = "https://vhcoreinfradev.blob.core.windows.net/"
+    demo    = "https://vhcoreinfradev.blob.core.windows.net/"
+  }
+}
