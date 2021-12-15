@@ -339,7 +339,7 @@ stages:
 
 
   - stage: Deploy_Preprod_Environments
-    #condition: and(succeeded(), or(startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/')))
+    condition: and(succeeded(), or(startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/')))
     dependsOn:
       - Plan_Preprod_Environments
     jobs:
