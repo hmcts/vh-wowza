@@ -59,3 +59,8 @@ variable "storage_msi_client_id" {
   type    = string
   default = ""
 }
+
+variable "boot_diag_storage_account" {
+  type    = string
+  default = ""
+}

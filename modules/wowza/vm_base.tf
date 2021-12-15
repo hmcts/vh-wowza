@@ -60,7 +60,7 @@ resource "azurerm_linux_virtual_machine" "wowza" {
   }
 
   boot_diagnostics {
-    storage_account_uri = "https://vhcoreinfrapreprod.blob.core.windows.net/"
+    storage_account_uri = var.boot_diag_storage_account
   }
 
 }
