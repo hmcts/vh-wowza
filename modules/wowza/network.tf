@@ -23,6 +23,18 @@ resource "azurerm_network_security_group" "wowza" {
   location            = azurerm_resource_group.wowza.location
 
   security_rule {
+    name                       = "AllowSSH"
+    priority                   = 1030
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefix      = var.address_space
+    destination_address_prefix = var.address_space
+  }
+
+  security_rule {
     name                       = "REST"
     priority                   = 1030
     direction                  = "Inbound"
@@ -46,5 +58,15 @@ resource "azurerm_network_security_group" "wowza" {
     destination_address_prefix = "*"
   }
 
-
+  security_rule {
+    name                       = "DenyVnetInbound"
+    priority                   = 4096
+    direction                  = "Inbound"
+    access                     = "Deny"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "VirtualNetwork"
+    destination_address_prefix = "*"
+  }
 }

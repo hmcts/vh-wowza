@@ -692,21 +692,21 @@ write_files:
       accountName ${storageAccountName}
       containerName ${storageContainerName}
       authType MSI
-      identityClientId ${msiClientId}
+      identityResourceId ${msiClientId}
   - owner: wowza:wowza
     path: /home/wowza/wowzaapps.cfg
     content: |
       accountName ${storageAccountName}
       containerName wowzaapps
       authType MSI
-      identityClientId ${msiClientId}
+      identityResourceId ${msiClientId}
   - owner: wowza:wowza
     path: /home/wowza/wowzaconf.cfg
     content: |
       accountName ${storageAccountName}
       containerName wowzaconf
       authType MSI
-      identityClientId ${msiClientId}
+      identityResourceId ${msiClientId}
   - owner: wowza:wowza
     path: /home/wowza/migrateWowzaToDisk.sh
     content: |
@@ -764,6 +764,10 @@ write_files:
         blobMount="/wowzadata/azurecopy"
         blobTmp="/wowzadata/blobfusetmp"
         blobCfg="/home/wowza/recordings.cfg"
+
+        # Install blobfuse
+        apt-get update
+        apt-get install blobfuse
 
         # Migrate Wowza.
         sudo sh /home/wowza/migrateWowzaToDisk.sh
