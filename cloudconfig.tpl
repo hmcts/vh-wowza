@@ -5,18 +5,6 @@ package_upgrade: true
 packages:
   - blobfuse
   - fuse
-device_aliases: {'ephemeral0': '/dev/sdb','datadisk': '/dev/sdc1'}
-disk_setup:
-  /dev/disk/azure/scsi1/lun10:
-    table_type: gpt
-    layout: true
-    overwrite: true
-fs_setup:
-  - device: /dev/disk/azure/scsi1/lun10
-    partition: 1
-    filesystem: ext4
-mounts:
-    - ["/dev/disk/azure/scsi1/lun10-part1", "/wowzadata", auto, "defaults,noexec,nofail"]
 write_files:
   - owner: wowza:wowza
     path: /home/wowza/WowzaStreamingEngine/conf/Server.xml
@@ -41,7 +29,7 @@ write_files:
                                       <SSLProtocol>TLS</SSLProtocol>
                                       <Algorithm>SunX509</Algorithm>
                                       <CipherSuites></CipherSuites>
-                                      <Protocols></Protocols>
+                                      <Protocols>TLSv1.2</Protocols>
                               </SSLConfig>
                               <IPWhiteList>*</IPWhiteList>
                               <IPBlackList></IPBlackList>
@@ -137,6 +125,20 @@ write_files:
               </Server>
       </Root>
   - owner: wowza:wowza
+    path: /usr/local/WowzaStreamingEngine/conf/Tune.xml
+    content: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Root>
+            <Tune>
+                <HeapSize>8192M</HeapSize>
+                <GarbageCollector>$${com.wowza.wms.TuningGarbageCollectorG1Default}</GarbageCollector>
+                <VMOptions>
+                        <VMOption>-server</VMOption>
+                        <VMOption>-Djava.net.preferIPv4Stack=true</VMOption>
+                </VMOptions>
+            </Tune>
+      </Root>
+  - owner: wowza:wowza
     path: /home/wowza/WowzaStreamingEngine/conf/VHost.xml
     content: |
       <?xml version="1.0" encoding="UTF-8"?>
@@ -160,17 +162,17 @@ write_files:
                                               <SSLProtocol>TLS</SSLProtocol>
                                               <Algorithm>SunX509</Algorithm>
                                               <CipherSuites></CipherSuites>
-                                              <Protocols></Protocols>
+                                              <Protocols>TLSv1.2</Protocols>
                                       </SSLConfig>
                                       <SocketConfiguration>
                                               <ReuseAddress>true</ReuseAddress>
-                                              <ReceiveBufferSize>65000</ReceiveBufferSize>
+                                              <ReceiveBufferSize>0</ReceiveBufferSize>
                                               <ReadBufferSize>65000</ReadBufferSize>
-                                              <SendBufferSize>65000</SendBufferSize>
+                                              <SendBufferSize>0</SendBufferSize>
                                               <KeepAlive>true</KeepAlive>
                                               <AcceptorBackLog>100</AcceptorBackLog>
                                       </SocketConfiguration>
-                                      <HTTPStreamerAdapterIDs>cupertinostreaming,smoothstreaming,sanjosestreaming,dvrchunkstreaming,mpegdashstreaming</HTTPStreamerAdapterIDs>
+                                      <HTTPStreamerAdapterIDs></HTTPStreamerAdapterIDs>
                                       <HTTPProviders>
                                               <HTTPProvider>
                                                       <BaseClass>com.wowza.wms.http.HTTPCrossdomain</BaseClass>
@@ -254,50 +256,7 @@ write_files:
                                       </HTTPProviders>
                               </HostPort>
                       </HostPortList>
-                      <HTTPStreamerAdapters>
-                              <HTTPStreamerAdapter>
-                                      <ID>smoothstreaming</ID>
-                                      <Name>smoothstreaming</Name>
-                                      <Properties>
-                                      </Properties>
-                              </HTTPStreamerAdapter>
-                              <HTTPStreamerAdapter>
-                                      <ID>cupertinostreaming</ID>
-                                      <Name>cupertinostreaming</Name>
-                                      <Properties>
-                                      </Properties>
-                              </HTTPStreamerAdapter>
-                              <HTTPStreamerAdapter>
-                                      <ID>sanjosestreaming</ID>
-                                      <Name>sanjosestreaming</Name>
-                                      <Properties>
-                                      </Properties>
-                              </HTTPStreamerAdapter>
-                              <HTTPStreamerAdapter>
-                                      <ID>dvrchunkstreaming</ID>
-                                      <Name>dvrchunkstreaming</Name>
-                                      <Properties>
-                                      </Properties>
-                              </HTTPStreamerAdapter>
-                              <HTTPStreamerAdapter>
-                                      <ID>mpegdashstreaming</ID>
-                                      <Name>mpegdashstreaming</Name>
-                                      <Properties>
-                                      </Properties>
-                              </HTTPStreamerAdapter>
-                              <HTTPStreamerAdapter>
-                                      <ID>tsstreaming</ID>
-                                      <Name>tsstreaming</Name>
-                                      <Properties>
-                                      </Properties>
-                              </HTTPStreamerAdapter>
-                              <HTTPStreamerAdapter>
-                                      <ID>webmstreaming</ID>
-                                      <Name>webmstreaming</Name>
-                                      <Properties>
-                                      </Properties>
-                              </HTTPStreamerAdapter>
-                      </HTTPStreamerAdapters>
+                      <HTTPStreamerAdapters></HTTPStreamerAdapters>
                       <!-- When set to zero, thread pool configuration is done in Server.xml -->
                       <HandlerThreadPool>
                               <PoolSize>0</PoolSize>
@@ -315,9 +274,9 @@ write_files:
                               <IdleFrequency>250</IdleFrequency>
                               <SocketConfiguration>
                                       <ReuseAddress>true</ReuseAddress>
-                                      <ReceiveBufferSize>65000</ReceiveBufferSize>
+                                      <ReceiveBufferSize>0</ReceiveBufferSize>
                                       <ReadBufferSize>65000</ReadBufferSize>
-                                      <SendBufferSize>65000</SendBufferSize>
+                                      <SendBufferSize>0</SendBufferSize>
                                       <KeepAlive>true</KeepAlive>
                                       <!-- <TrafficClass>0</TrafficClass> -->
                                       <!-- <OobInline>false</OobInline> -->
@@ -437,7 +396,7 @@ write_files:
         <Root version="1">
                 <Application>
                         <Name></Name>
-                        <AppType></AppType>
+                        <AppType>live</AppType>
                         <Description></Description>
                         <!-- Uncomment to set application level timeout values
                         <ApplicationTimeout>60000</ApplicationTimeout>
@@ -463,7 +422,7 @@ write_files:
 
                         -->
                         <Streams>
-                                <StreamType>default</StreamType>
+                                <StreamType>live</StreamType>
                                 <StorageDir>$${com.wowza.wms.context.VHostConfigHome}/content</StorageDir>
                                 <KeyDir>$${com.wowza.wms.context.VHostConfigHome}/keys</KeyDir>
                                 <!-- LiveStreamPacketizers (separate with commas): cupertinostreamingpacketizer, smoothstreamingpacketizer, sanjosestreamingpacketizer, mpegdashstreamingpacketizer, cupertinostreamingrepeater, smoothstreamingrepeater, sanjosestreamingrepeater, mpegdashstreamingrepeater, dvrstreamingpacketizer, dvrstreamingrepeater -->
@@ -513,7 +472,7 @@ write_files:
 
                         <TimedText>
                                 <!-- VOD caption providers (separate with commas): vodcaptionprovidermp4_3gpp, vodcaptionproviderttml, vodcaptionproviderwebvtt,  vodcaptionprovidersrt, vodcaptionproviderscc -->
-                                <VODTimedTextProviders>vodcaptionprovidermp4_3gpp</VODTimedTextProviders>
+                                <VODTimedTextProviders></VODTimedTextProviders>
 
                                 <!-- Properties for TimedText -->
                                 <Properties>
@@ -532,7 +491,7 @@ write_files:
                                 <IdleFrequency>-1</IdleFrequency>
                                 <Access>
                                         <StreamReadAccess>*</StreamReadAccess>
-                                        <StreamWriteAccess></StreamWriteAccess>
+                                        <StreamWriteAccess>*</StreamWriteAccess>
                                         <StreamAudioSampleAccess></StreamAudioSampleAccess>
                                         <StreamVideoSampleAccess></StreamVideoSampleAccess>
                                         <SharedObjectReadAccess>*</SharedObjectReadAccess>
@@ -559,29 +518,6 @@ write_files:
                                 <Properties>
                                 </Properties>
                         </RTP>
-                        <WebRTC>
-                                <!--  Enable WebRTC publishing to this application -->
-                                <EnablePublish>false</EnablePublish>
-                                <!-- Enable WebRTC playback from this application -->
-                                <EnablePlay>false</EnablePlay>
-                                <!--  Enable query of published stream names for this application -->
-                                <EnableQuery>false</EnableQuery>
-                                <!--  IP address, transport, and port used for WebRTC streaming. -->
-                                <!--TCP format: [wowza-streaming-engine-external-ip-address],tcp,[port] -->
-                                <!--UDP format: [wowza-streaming-engine-external-ip-address],udp -->
-                                <IceCandidateIpAddresses>127.0.0.1,tcp,1935</IceCandidateIpAddresses>
-                                <!-- Local IP address of the network card you want to use for WebRTC UDP traffic -->
-                                <UDPBindAddress></UDPBindAddress>
-                                <!-- Comma-deliniated list of audio codecs, in order of preference, for stream ingestion -->
-                                <PreferredCodecsAudio>opus,vorbis,pcmu,pcma</PreferredCodecsAudio>
-                                <!-- Comma-deliniated list of video codecs, in order of preference, for stream ingestion -->
-                                <PreferredCodecsVideo>vp8,h264</PreferredCodecsVideo>
-                                <!-- Enable WebRTC debug logging -->
-                                <DebugLog>false</DebugLog>
-                                <!-- Properties for WebRTC -->
-                                <Properties>
-                                </Properties>
-                        </WebRTC>
                         <MediaCaster>
                                 <RTP>
                                         <RTSP>
@@ -647,19 +583,24 @@ write_files:
                         <StreamRecorder>
                                 <Properties>
                                         <Property>
-                                                                                <Name>streamRecorderFileVersionTemplate</Name>
-                                                                <Value>$${SourceStreamName}_$${RecordingStartTime}_$${SegmentNumber}</Value>
-                                                                                <Type>String</Type>
-                                                                </Property>
-                                                                <Property>
-                                                                                <Name>streamRecorderSegmentationType</Name>
-                                                                                <Value>duration</Value>
-                                                                                <Type>String</Type>
-                                                                </Property>
-                                                                <Property>
-                                                                                <Name>streamRecorderSegmentDuration</Name>
-                                                                                <Value>20000000</Value>
-                                                                                <Type>long</Type>
+                                                <Name>streamRecorderFileVersionDelegate</Name>
+                                                <Value>LiveStreamRecordFileVersionDelegate</Value>
+                                                <Type>String</Type>
+                                        </Property>
+                                        <Property>
+                                                <Name>streamRecorderFileVersionTemplate</Name>
+                                                <Value>$${SourceStreamName}_$${RecordingStartTime}_$${SegmentNumber}</Value>
+                                                <Type>String</Type>
+                                        </Property>
+                                        <Property>
+                                                <Name>streamRecorderSegmentationType</Name>
+                                                <Value>duration</Value>
+                                                <Type>String</Type>
+                                        </Property>
+                                        <Property>
+                                                <Name>streamRecorderSegmentDuration</Name>
+                                                <Value>20000000</Value>
+                                                <Type>long</Type>
                                         </Property>
                                 </Properties>
                         </StreamRecorder>
@@ -680,79 +621,109 @@ write_files:
                                         <Class>com.wowza.wms.module.ModuleFLVPlayback</Class>
                                 </Module>
                                 <Module>
+                                        <Name>ModuleCoreSecurity</Name>
+                                        <Description>Core Security Module for Applications</Description>
+                                        <Class>com.wowza.wms.security.ModuleCoreSecurity</Class>
+                                </Module>
+                                <Module>
                                         <Name>ModuleAutoRecord</Name>
                                         <Description>Auto-record streams that are published to this application instance.</Description>
                                         <Class>com.wowza.wms.plugin.ModuleAutoRecord</Class>
                                 </Module>
+                                <Module>
+                                	<Name>ModuleMediaWriterFileMover</Name>
+                                        <Description>ModuleMediaWriterFileMover</Description>
+                                        <Class>com.wowza.wms.module.ModuleMediaWriterFileMover</Class>
+                                </Module>
                         </Modules>
                         <!-- Properties defined here will be added to the IApplication.getProperties() and IApplicationInstance.getProperties() collections -->
                         <Properties>
+                                <Property>
+                                        <Name>securityPublishRequirePassword</Name>
+                                        <Value>false</Value>
+                                        <Type>Boolean</Type>
+                                </Property>
+                                <Property>
+                                        <Name>securityPublishBlockDuplicateStreamNames</Name>
+                                        <Value>true</Value>
+                                        <Type>Boolean</Type>
+                                </Property>
+                                <Property>
+                                        <Name>fileMoverDestinationPath</Name>
+                                        <Value>/wowzadata/azurecopy</Value>
+                                </Property>
+                                <Property>
+                                        <Name>fileMoverDeleteOriginal</Name>
+                                        <Value>true</Value>
+                                        <Type>Boolean</Type>
+                                </Property>
+                                <Property>
+                                        <Name>fileMoverVersionFile</Name>
+                                        <Value>true</Value>
+                                        <Type>Boolean</Type>
+                                </Property>
                         </Properties>
                 </Application>
         </Root>
-  - owner: root:root
-    path: /etc/rc.local
-    content: |
-      #!/bin/sh -e
-      #
-      # rc.local
-      #
-      # This script is executed at the end of each multiuser runlevel.
-      # Make sure that the script will "exit 0" on success or any other
-      # value on error.
-      #
-      # In order to enable or disable this script just change the execution
-      # bits.
-      #
-      # By default this script does nothing.
-
-      sudo bash /home/wowza/mount.sh /wowzadata/azurecopy /home/wowza/recordings.cfg /wowzadata/blobfusetmp
-
-      exit 0
   - owner: wowza:wowza
     path: /home/wowza/mount.sh
+    permissions: 0775
     content: |
-      #!/bin/bash
-      blobfuse $1 --tmp-path=$3 -o attr_timeout=240 -o entry_timeout=240 -o negative_timeout=120 --file-cache-timeout-in-seconds=0 --config-file=$2 -o allow_other -o nonempty
+        #!/bin/bash
+
+        # This Script Should Be Run As ROOT!
+
+        mkdir -p $1 $3
+
+        mountsTmp='/home/wowza/mounts.txt'
+        df -h > $mountsTmp
+
+        if grep -q "$(realpath $1)" $mountsTmp && grep -q "blobfuse" $mountsTmp; then
+           echo "Blob IS Mounted."
+        else
+           echo "Blob IS NOT Mounted, Mounting Blob Fuse..."
+           blobfuse $1 --tmp-path=$3 -o attr_timeout=240 -o entry_timeout=240 -o negative_timeout=120 --file-cache-timeout-in-seconds=0 --config-file=$2 -o allow_other -o nonempty
+        fi
+
+        rm -f $mountsTmp
   - owner: wowza:wowza
     path: /home/wowza/recordings.cfg
     content: |
       accountName ${storageAccountName}
       containerName ${storageContainerName}
       authType MSI
-      identityResourceId ${msiClientId}
+      identityClientId ${msiClientId}
   - owner: wowza:wowza
     path: /home/wowza/wowzaapps.cfg
     content: |
       accountName ${storageAccountName}
       containerName wowzaapps
       authType MSI
-      identityResourceId ${msiClientId}
+      identityClientId ${msiClientId}
   - owner: wowza:wowza
     path: /home/wowza/wowzaconf.cfg
     content: |
       accountName ${storageAccountName}
       containerName wowzaconf
       authType MSI
-      identityResourceId ${msiClientId}
+      identityClientId ${msiClientId}
   - owner: wowza:wowza
     path: /home/wowza/migrateWowzaToDisk.sh
     content: |
-      service WowzaStreamingEngine stop
-
-      rm -r -f /wowzadata/blobfusetmp
-      mkdir -p /wowzadata/blobfusetmp
-      mkdir -p /wowzadata/azurecopy
-
       cp /home/wowza/WowzaStreamingEngine/conf/Server.xml /usr/local/WowzaStreamingEngine/conf/Server.xml
       cp /home/wowza/WowzaStreamingEngine/conf/VHost.xml /usr/local/WowzaStreamingEngine/conf/VHost.xml
       cp /home/wowza/WowzaStreamingEngine/conf/Application.xml /usr/local/WowzaStreamingEngine/conf/Application.xml
       cp /home/wowza/WowzaStreamingEngine/conf/admin.password /usr/local/WowzaStreamingEngine/conf/admin.password
       cp /home/wowza/WowzaStreamingEngine/conf/publish.password /usr/local/WowzaStreamingEngine/conf/publish.password
+  - owner: wowza:wowza
+    permissions: 0775
+    path: /home/wowza/mountBlobFuse.sh
+    content: |
+      rm -r -f /wowzadata/blobfusetmp
+      mkdir -p /wowzadata/blobfusetmp
+      mkdir -p /wowzadata/azurecopy
 
       bash /home/wowza/mount.sh /wowzadata/azurecopy /home/wowza/recordings.cfg /wowzadata/blobfusetmp
-
-      service WowzaStreamingEngine start
   - owner: wowza:wowza
     path: /home/wowza/WowzaStreamingEngine/conf/admin.password
     content: |
@@ -765,14 +736,209 @@ write_files:
       # Publish password file (format [username][space][password])
       #username password
       wowza ${streamPassword}
+  - owner: wowza:wowza
+    permissions: 0775
+    path: /home/wowza/check-file-size.sh
+    content: |
+        #!/bin/bash
+
+        # Project
+        project="VH"
+
+        # Set Log Path.
+        logFolder="/home/wowza/logs"
+        logPath="/home/wowza/logs/check-file-size.log"
+
+        # Set Dynatrace Details.
+        dynatrace_token="${dynatrace_token}"
+        dynatrace_tenant="${dynatrace_tenant}"
+
+        # test 
+        size="1MB"
+        date="_$(date '+%Y-%m-%d')-"
+        fileName="*$date*"
+        sourcePath="/wowzadata/azurecopy/"
+        foundItems=$(find $sourcePath -type f -name  $fileName  -size -1M;)
+
+        # Set logs
+        NOW=`date '+%F %H:%M:%S'`
+        mkdir -p $logFolder
+        touch $logPath
+
+        echo "Starting Check at $NOW" >> $logPath
+        if [ -z "$foundItems" ]; then
+                echo "No files under $size found today" >> $logPath
+        else
+                echo "Files under $size found" >> $logPath
+                echo "$foundItems" >> $logPath
+                curl --location --request POST "https://$dynatrace_tenant.live.dynatrace.com/api/v2/events/ingest" \
+                --header "Authorization: API-Token $dynatrace_token" \
+                --header 'Content-Type: application/json' \
+                --data-raw "{
+                        \"eventType\": \"ERROR_EVENT\",
+                        \"title\": \"FH - $project - Files under $size\",
+                        \"entitySelector\": \"type(HOST),entityName.startsWith($HOSTNAME)\",
+                        \"properties\": {
+                        \"Size\": \"$size\",
+                        \"Files\": \"$foundItems\"
+                        }
+                }" >> $logPath
+        fi
+  - owner: wowza:wowza
+    permissions: 0775
+    path: /home/wowza/check-cert.sh
+    content: |
+        #!/bin/bash
+
+        # Project
+        project="VH" 
+
+        # Set Dynatrace Details.
+        dynatrace_token="${dynatrace_token}"
+        dynatrace_tenant="${dynatrace_tenant}"
+
+        # Java Key Store Details.
+        jksPath="/usr/local/WowzaStreamingEngine/conf/ssl.wowza.jks"
+        jksPass="${certPassword}"
+
+        # Set Log Path.
+        logFolder="/home/wowza/logs"
+        logPath="/home/wowza/logs/check-cert.log"
+
+        # Wowza Engine Path.
+        export PATH=$PATH:/usr/local/WowzaStreamingEngine/java/bin
+
+        # Get Certificate Expiry Date.
+        expiryDate=$(keytool -list -v -keystore $jksPath -storepass $jksPass | grep until | head -1 | sed 's/.*until: //')
+        echo "Certificate Expires $expiryDate"
+        certExpiryDate=$expiryDate
+        expiryDate="$(date -d "$expiryDate - 12 days" +%Y%m%d)"
+        echo "Certificate Forced Expiry is $expiryDate"
+        today=$(date +%Y%m%d)
+
+        # Send Alert to Dynatrace if Expirary Date within 12 Days.
+        NOW=`date '+%F %H:%M:%S'`
+        mkdir -p $logFolder
+        touch $logPath
+
+        echo "Starting Check at $NOW" >> $logPath
+        if [[ $expiryDate -lt $today ]]; then
+                echo "Wowza Certificate Has Expired" >> $logPath
+                curl --location --request POST "https://$dynatrace_tenant.live.dynatrace.com/api/v2/events/ingest" \
+                --header "Authorization: API-Token $dynatrace_token" \
+                --header 'Content-Type: application/json' \
+                --data-raw "{
+                        \"eventType\": \"ERROR_EVENT\",
+                        \"title\": \"FH - $project - Wowza Certificte Expiry\",
+                        \"entitySelector\": \"type(HOST),entityName.startsWith($HOSTNAME)\",
+                        \"properties\": {
+                        \"Certificte.expiry\": \"$certExpiryDate\",
+                        \"Certificte.renewal\": \"$expiryDate\"
+                        }
+                }" >> $logPath
+        else
+                echo "Wowza Certificate Has NOT Expired" >> $logPath
+        fi
+  - owner: wowza:wowza
+    permissions: 0775
+    path: /home/wowza/renew-cert.sh
+    content: |
+        #!/bin/bash
+
+        miClientId="${managedIdentityClientId}"
+
+        az login --identity --username $miClientId
+
+        keyVaultName="${keyVaultName}"
+        certName="${certName}"
+        domain="${domain}"
+
+        jksPath="/usr/local/WowzaStreamingEngine/conf/ssl.wowza.jks"
+        jksPass="${certPassword}"
+
+        export PATH=$PATH:/usr/local/WowzaStreamingEngine/java/bin
+
+        expiryDate=$(keytool -list -v -keystore $jksPath -storepass $jksPass | grep until | head -1 | sed 's/.*until: //')
+
+        echo "Certificate Expires $expiryDate"
+        expiryDate="$(date -d "$expiryDate - 14 days" +%Y%m%d)"
+        echo "Certificate Forced Expiry is $expiryDate"
+        today=$(date +%Y%m%d)
+
+        if [[ $expiryDate -lt $today ]]; then
+            echo "Certificate has expired"
+            downloadedPfxPath="downloadedCert.pfx"
+            signedPfxPath="signedCert.pfx"
+        
+            rm -rf $downloadedPfxPath || true
+            az keyvault secret download --file $downloadedPfxPath --vault-name $keyVaultName --encoding base64 --name $certName
+            
+            rm -rf $signedPfxPath || true
+            openssl pkcs12 -in $downloadedPfxPath -out tmpmycert.pem -passin pass: -passout pass:$jksPass -nodes
+            openssl pkcs12 -export -out $signedPfxPath -in tmpmycert.pem -passin pass:$jksPass -passout pass:$jksPass
+
+            keytool -delete -alias 1 -keystore $jksPath -storepass $jksPass
+            keytool -importkeystore -srckeystore $signedPfxPath -srcstoretype pkcs12 -destkeystore $jksPath -deststoretype JKS -deststorepass $jksPass -srcstorepass $jksPass
+        else
+            echo "Certificate has NOT expired"
+        fi
+  - owner: wowza:wowza
+    path: /home/wowza/cron.sh
+    permissions: 0775
+    content: |
+        #!/bin/bash
+        # Prepare Script.
+        cronTaskPath='/home/wowza/cronjobs.txt'
+        cronTaskPathRoot='/home/wowza/cronjobsRoot.txt'
+
+        # Cron For Mounting/Re-Mounting.
+        logFolder='/home/wowza/logs'
+        mkdir -p $logFolder
+        echo "*/5 * * * * /home/wowza/mount.sh $1 $2 $3 >> $logFolder/wowza_mount.log 2>&1" >> $cronTaskPathRoot
+
+        # Cron For Certs.
+        echo "0 0 * * * /home/wowza/renew-cert.sh" >> $cronTaskPath
+
+        if [[ $HOSTNAME == *"prod"* ]] || [[ $HOSTNAME == *"stg"* ]]; then
+          echo "10 0 * * * /home/wowza/check-cert.sh" >> $cronTaskPath
+          echo "10 0 * * * /home/wowza/check-file-size.sh" >> $cronTaskPath
+        fi
+
+        # Set Up Cron Jobs for Wowza & Root.
+        crontab -u wowza $cronTaskPath
+        crontab $cronTaskPathRoot
+        
+        # Remove To Avoid Duplicates.
+        rm -f $cronTaskPath
+        rm -f $cronTaskPathRoot
+  # PLEASE LEAVE THIS AT THE BOTTOM
+  - owner: wowza:wowza
+    permissions: 0775
+    path: /home/wowza/runcmd.sh
+    content: |
+        #!/bin/bash
+        # Inputs.
+        blobMount="/wowzadata/azurecopy"
+        blobTmp="/wowzadata/blobfusetmp"
+        blobCfg="/home/wowza/recordings.cfg"
+
+        # Migrate Wowza.
+        sudo sh /home/wowza/migrateWowzaToDisk.sh
+        wget https://www.wowza.com/downloads/forums/collection/wse-plugin-autorecord.zip && unzip wse-plugin-autorecord.zip && mv lib/wse-plugin-autorecord.jar /usr/local/WowzaStreamingEngine/lib/ && chown wowza: /usr/local/WowzaStreamingEngine/lib/wse-plugin-autorecord.jar
+  
+        # Mount Blob Fuse.
+        /home/wowza/mount.sh $blobMount $blobCfg $blobTmp
+        
+        # Install Certs.
+        sudo curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash # Az cli install
+        sudo /home/wowza/renew-cert.sh
+
+        # Set-up CronJobs.
+        /home/wowza/cron.sh $blobMount $blobCfg $blobTmp
+
+        # Restart Wowza.
+        sudo service WowzaStreamingEngine restart
 runcmd:
-  - 'chmod +x /etc/rc.local && systemctl enable rc-local.service && systemctl start rc-local.service'
-  - 'bash /home/wowza/migrateWowzaToDisk.sh'
-  - 'wget https://www.wowza.com/downloads/forums/collection/wse-plugin-autorecord.zip && unzip wse-plugin-autorecord.zip && mv lib/wse-plugin-autorecord.jar /usr/local/WowzaStreamingEngine/lib/ && chown wowza: /usr/local/WowzaStreamingEngine/lib/wse-plugin-autorecord.jar'
-  - 'secretsname=$(find /var/lib/waagent/ -name "${certThumbprint}.prv" | cut -c -57)'
-  - 'openssl pkcs12 -export -out $secretsname.pfx -inkey $secretsname.prv -in $secretsname.crt -passin pass: -passout pass:${certPassword}'
-  - 'export PATH=$PATH:/usr/local/WowzaStreamingEngine/java/bin'
-  - 'keytool -importkeystore -srckeystore $secretsname.pfx -srcstoretype pkcs12 -destkeystore /usr/local/WowzaStreamingEngine/conf/ssl.wowza.jks -deststoretype JKS -deststorepass ${certPassword} -srcstorepass ${certPassword}'
-  - 'service WowzaStreamingEngine restart'
+  - 'sudo /home/wowza/runcmd.sh'
 
 final_message: "The system is finally up, after $UPTIME seconds"
