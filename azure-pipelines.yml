@@ -86,10 +86,26 @@ stages:
         env:
           keyVaultName: $(publicCertKVName_dev)
 
+  - stage: Approve_Terraform_Dev
+    displayName: 'Approve Terraform Dev'
+    dependsOn: Plan_Dev_Environments
+    jobs:
+      - job: waitForValidation
+        displayName: 'Approve Terraform Dev'
+        pool: server
+        timeoutInMinutes: 4320 # job times out in 3 days
+        steps:
+        - task: ManualValidation@0
+          timeoutInMinutes: 1440 # task times out in 1 day
+          inputs:
+            instructions: 'Please Approve for Terraform Release...'
+            onTimeout: 'reject'
+
   - stage: Deploy_Dev_Environments
-    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/master'))
+    condition: or( contains(variables['Build.SourceBranch'], 'refs/heads/master'), contains(variables['Build.SourceBranch'], 'refs/pull') )
     dependsOn:
       - Plan_Dev_Environments
+      - Approve_Terraform_Dev
     jobs:
       - template: pipeline/terraform-deployment.yml
         parameters:
@@ -520,4 +536,4 @@ stages:
                       $ip = (Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
                       az keyvault network-rule remove --name $env:keyVaultName --ip-address "$IP/32"
                   env:
-                    keyVaultName: $(publicCertKVName_prod)
+                    keyVaultName: $(publicCertKVName_prod
