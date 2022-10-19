@@ -24,7 +24,7 @@ resource "azurerm_network_security_group" "wowza" {
 
   security_rule {
     name                       = "AllowSSH"
-    priority                   = 1030
+    priority                   = 1010
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
