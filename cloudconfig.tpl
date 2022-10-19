@@ -737,158 +737,11 @@ write_files:
       #username password
       wowza ${streamPassword}
   - owner: wowza:wowza
-    permissions: 0775
-    path: /home/wowza/check-file-size.sh
-    content: |
-        #!/bin/bash
-
-        # Project
-        project="VH"
-
-        # Set Log Path.
-        logFolder="/home/wowza/logs"
-        logPath="/home/wowza/logs/check-file-size.log"
-
-        # Set Dynatrace Details.
-        dynatrace_token="${dynatrace_token}"
-        dynatrace_tenant="${dynatrace_tenant}"
-
-        # test 
-        size="1MB"
-        date="_$(date '+%Y-%m-%d')-"
-        fileName="*$date*"
-        sourcePath="/wowzadata/azurecopy/"
-        foundItems=$(find $sourcePath -type f -name  $fileName  -size -1M;)
-
-        # Set logs
-        NOW=`date '+%F %H:%M:%S'`
-        mkdir -p $logFolder
-        touch $logPath
-
-        echo "Starting Check at $NOW" >> $logPath
-        if [ -z "$foundItems" ]; then
-                echo "No files under $size found today" >> $logPath
-        else
-                echo "Files under $size found" >> $logPath
-                echo "$foundItems" >> $logPath
-                curl --location --request POST "https://$dynatrace_tenant.live.dynatrace.com/api/v2/events/ingest" \
-                --header "Authorization: API-Token $dynatrace_token" \
-                --header 'Content-Type: application/json' \
-                --data-raw "{
-                        \"eventType\": \"ERROR_EVENT\",
-                        \"title\": \"FH - $project - Files under $size\",
-                        \"entitySelector\": \"type(HOST),entityName.startsWith($HOSTNAME)\",
-                        \"properties\": {
-                        \"Size\": \"$size\",
-                        \"Files\": \"$foundItems\"
-                        }
-                }" >> $logPath
-        fi
-  - owner: wowza:wowza
-    permissions: 0775
-    path: /home/wowza/check-cert.sh
-    content: |
-        #!/bin/bash
-
-        # Project
-        project="VH" 
-
-        # Set Dynatrace Details.
-        dynatrace_token="${dynatrace_token}"
-        dynatrace_tenant="${dynatrace_tenant}"
-
-        # Java Key Store Details.
-        jksPath="/usr/local/WowzaStreamingEngine/conf/ssl.wowza.jks"
-        jksPass="${certPassword}"
-
-        # Set Log Path.
-        logFolder="/home/wowza/logs"
-        logPath="/home/wowza/logs/check-cert.log"
-
-        # Wowza Engine Path.
-        export PATH=$PATH:/usr/local/WowzaStreamingEngine/java/bin
-
-        # Get Certificate Expiry Date.
-        expiryDate=$(keytool -list -v -keystore $jksPath -storepass $jksPass | grep until | head -1 | sed 's/.*until: //')
-        echo "Certificate Expires $expiryDate"
-        certExpiryDate=$expiryDate
-        expiryDate="$(date -d "$expiryDate - 12 days" +%Y%m%d)"
-        echo "Certificate Forced Expiry is $expiryDate"
-        today=$(date +%Y%m%d)
-
-        # Send Alert to Dynatrace if Expirary Date within 12 Days.
-        NOW=`date '+%F %H:%M:%S'`
-        mkdir -p $logFolder
-        touch $logPath
-
-        echo "Starting Check at $NOW" >> $logPath
-        if [[ $expiryDate -lt $today ]]; then
-                echo "Wowza Certificate Has Expired" >> $logPath
-                curl --location --request POST "https://$dynatrace_tenant.live.dynatrace.com/api/v2/events/ingest" \
-                --header "Authorization: API-Token $dynatrace_token" \
-                --header 'Content-Type: application/json' \
-                --data-raw "{
-                        \"eventType\": \"ERROR_EVENT\",
-                        \"title\": \"FH - $project - Wowza Certificte Expiry\",
-                        \"entitySelector\": \"type(HOST),entityName.startsWith($HOSTNAME)\",
-                        \"properties\": {
-                        \"Certificte.expiry\": \"$certExpiryDate\",
-                        \"Certificte.renewal\": \"$expiryDate\"
-                        }
-                }" >> $logPath
-        else
-                echo "Wowza Certificate Has NOT Expired" >> $logPath
-        fi
-  - owner: wowza:wowza
-    permissions: 0775
-    path: /home/wowza/renew-cert.sh
-    content: |
-        #!/bin/bash
-
-        miClientId="${managedIdentityClientId}"
-
-        az login --identity --username $miClientId
-
-        keyVaultName="${keyVaultName}"
-        certName="${certName}"
-        domain="${domain}"
-
-        jksPath="/usr/local/WowzaStreamingEngine/conf/ssl.wowza.jks"
-        jksPass="${certPassword}"
-
-        export PATH=$PATH:/usr/local/WowzaStreamingEngine/java/bin
-
-        expiryDate=$(keytool -list -v -keystore $jksPath -storepass $jksPass | grep until | head -1 | sed 's/.*until: //')
-
-        echo "Certificate Expires $expiryDate"
-        expiryDate="$(date -d "$expiryDate - 14 days" +%Y%m%d)"
-        echo "Certificate Forced Expiry is $expiryDate"
-        today=$(date +%Y%m%d)
-
-        if [[ $expiryDate -lt $today ]]; then
-            echo "Certificate has expired"
-            downloadedPfxPath="downloadedCert.pfx"
-            signedPfxPath="signedCert.pfx"
-        
-            rm -rf $downloadedPfxPath || true
-            az keyvault secret download --file $downloadedPfxPath --vault-name $keyVaultName --encoding base64 --name $certName
-            
-            rm -rf $signedPfxPath || true
-            openssl pkcs12 -in $downloadedPfxPath -out tmpmycert.pem -passin pass: -passout pass:$jksPass -nodes
-            openssl pkcs12 -export -out $signedPfxPath -in tmpmycert.pem -passin pass:$jksPass -passout pass:$jksPass
-
-            keytool -delete -alias 1 -keystore $jksPath -storepass $jksPass
-            keytool -importkeystore -srckeystore $signedPfxPath -srcstoretype pkcs12 -destkeystore $jksPath -deststoretype JKS -deststorepass $jksPass -srcstorepass $jksPass
-        else
-            echo "Certificate has NOT expired"
-        fi
-  - owner: wowza:wowza
     path: /home/wowza/cron.sh
     permissions: 0775
     content: |
         #!/bin/bash
         # Prepare Script.
-        cronTaskPath='/home/wowza/cronjobs.txt'
         cronTaskPathRoot='/home/wowza/cronjobsRoot.txt'
 
         # Cron For Mounting/Re-Mounting.
@@ -896,20 +749,10 @@ write_files:
         mkdir -p $logFolder
         echo "*/5 * * * * /home/wowza/mount.sh $1 $2 $3 >> $logFolder/wowza_mount.log 2>&1" >> $cronTaskPathRoot
 
-        # Cron For Certs.
-        echo "0 0 * * * /home/wowza/renew-cert.sh" >> $cronTaskPath
-
-        if [[ $HOSTNAME == *"prod"* ]] || [[ $HOSTNAME == *"stg"* ]]; then
-          echo "10 0 * * * /home/wowza/check-cert.sh" >> $cronTaskPath
-          echo "10 0 * * * /home/wowza/check-file-size.sh" >> $cronTaskPath
-        fi
-
         # Set Up Cron Jobs for Wowza & Root.
-        crontab -u wowza $cronTaskPath
         crontab $cronTaskPathRoot
         
         # Remove To Avoid Duplicates.
-        rm -f $cronTaskPath
         rm -f $cronTaskPathRoot
   # PLEASE LEAVE THIS AT THE BOTTOM
   - owner: wowza:wowza
@@ -931,7 +774,6 @@ write_files:
         
         # Install Certs.
         sudo curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash # Az cli install
-        sudo /home/wowza/renew-cert.sh
 
         # Set-up CronJobs.
         /home/wowza/cron.sh $blobMount $blobCfg $blobTmp
