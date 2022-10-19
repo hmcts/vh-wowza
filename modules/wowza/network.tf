@@ -59,6 +59,18 @@ resource "azurerm_network_security_group" "wowza" {
   }
 
   security_rule {
+    name                       = "AllowLoadBalancerInbound"
+    priority                   = 4095
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "AzureLoadBalancer"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
     name                       = "DenyVnetInbound"
     priority                   = 4096
     direction                  = "Inbound"
