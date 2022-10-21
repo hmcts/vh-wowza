@@ -9,7 +9,7 @@ data "azurerm_client_config" "current" {
 resource "azurerm_key_vault_access_policy" "kv_user" {
   key_vault_id = data.azurerm_key_vault.vhcoreinfra.id
   tenant_id    = data.azurerm_client_config.current.tenant_id
-  object_id    = data.azurerm_user_assigned_identity.kv_user.object_id
+  object_id    = data.azurerm_user_assigned_identity.kv_user.principal_id
   
   certificate_permissions = [
     "Get",
