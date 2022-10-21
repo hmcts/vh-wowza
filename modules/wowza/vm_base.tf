@@ -61,7 +61,7 @@ resource "azurerm_linux_virtual_machine" "wowza" {
     type = "UserAssigned"
     identity_ids = [
       var.storage_msi_client_id,
-      data.azurerm_user_assigned_identity.kv_user.principal_id
+      data.azurerm_user_assigned_identity.kv_user.resource_id
     ]
   }
 
