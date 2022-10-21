@@ -14,6 +14,8 @@ resource "azurerm_subnet" "wowza" {
 
   enforce_private_link_endpoint_network_policies = true
   enforce_private_link_service_network_policies = true
+  
+  service_endpoints                           = [ "Microsoft.KeyVault" ]
 }
 
 resource "azurerm_network_security_group" "wowza" {
