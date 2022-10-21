@@ -6,5 +6,5 @@ data "azurerm_key_vault" "vhcoreinfra" {
 resource "azurerm_role_assignment" "kv_user" {
   scope                = data.azurerm_key_vault.vhcoreinfra.id
   role_definition_name = "Reader"
-  principal_id         = data.azurerm_client_config.kv_user.object_id
+  principal_id         = data.azurerm_user_assigned_identity.kv_user.principal_id
 }
