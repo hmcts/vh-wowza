@@ -29,7 +29,7 @@ variable "admin_ssh_key_path" {
 
 variable "os_disk_type" {
   type    = string
-  default = "Standard_LRS"
+  default = "Premium_LRS"
 }
 
 variable "service_certificate_kv_url" {

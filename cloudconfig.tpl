@@ -754,6 +754,34 @@ write_files:
         
         # Remove To Avoid Duplicates.
         rm -f $cronTaskPathRoot
+  - owner: wowza:wowza
+    path: /home/wowza/install-cert.sh
+    permissions: 0775
+    content: |
+        #!/bin/bash
+        downloadedPfx="/home/wowza/wildcard.pfx"
+        signedPfx="/home/wowza/signed.pfx"
+        jksPath="/usr/local/WowzaStreamingEngine/conf/ssl.wowza.jks"
+        jksPass="${certPassword}"
+
+        az login --identity --username ${kvClientId}
+
+        az keyvault secret download --vault-name ${kvName} --file $downloadedPfx -n "wildcard-hearings-hmcts-net-28062022" --encoding base64
+
+        export PATH=$PATH:/usr/local/WowzaStreamingEngine/java/bin
+
+        openssl pkcs12 -in $downloadedPfx -out temp.pem -passin pass: -passout pass:$jksPass
+
+        openssl pkcs12 -export -out $signedPfx -in temp.pem -passin pass:$jksPass -passout pass:$jksPass
+
+        if [ -f "$jksPath" ]; then
+          sudo chmod 777 $jksPath
+          keytool -delete -alias 1 -keystore $jksPath -storepass $jksPass
+        fi
+
+        keytool -importkeystore -srckeystore $signedPfx -srcstoretype pkcs12 -destkeystore $jksPath -deststoretype JKS -deststorepass $jksPass -srcstorepass $jksPass
+
+        sudo service WowzaStreamingEngine restart
   # PLEASE LEAVE THIS AT THE BOTTOM
   - owner: wowza:wowza
     permissions: 0775
@@ -776,11 +804,14 @@ write_files:
         # Mount Blob Fuse.
         /home/wowza/mount.sh $blobMount $blobCfg $blobTmp
         
-        # Install Certs.
-        sudo curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash # Az cli install
+        # Install Azure CLI.
+        sudo curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
         # Set-up CronJobs.
         /home/wowza/cron.sh $blobMount $blobCfg $blobTmp
+
+        # Install SSL Cert.
+        /home/wowza/install-cert.sh
 
         # Restart Wowza.
         sudo service WowzaStreamingEngine restart
