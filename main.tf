@@ -7,6 +7,7 @@ module "wowza" {
   key_vault_id                   = var.key_vault_id
   address_space                  = lookup(var.workspace_to_address_space_map, terraform.workspace, "")
   storage_msi_client_id          = lookup(var.workspace_to_storage_msi_map, terraform.workspace, "")
+  environment                    = terraform.workspace
 }
 
 resource "azurerm_dns_a_record" "wowza" {

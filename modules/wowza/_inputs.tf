@@ -59,3 +59,7 @@ variable "storage_msi_client_id" {
   type    = string
   default = ""
 }
+
+variable "environment" {
+  type    = string
+}

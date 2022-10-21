@@ -1,3 +1,8 @@
+data "azurerm_user_assigned_identity" "kv_user" {
+  name                = "vh-core-infra-${var.environment}-kvuser"
+  resource_group_name = "vh-core-infra-${var.environment}"
+}
+
 resource "azurerm_linux_virtual_machine" "wowza" {
   count = var.wowza_instance_count
 
@@ -55,7 +60,8 @@ resource "azurerm_linux_virtual_machine" "wowza" {
   identity {
     type = "UserAssigned"
     identity_ids = [
-      var.storage_msi_client_id
+      var.storage_msi_client_id,
+      data.azurerm_user_assigned_identity.kv_user.principal_id
     ]
   }
 
