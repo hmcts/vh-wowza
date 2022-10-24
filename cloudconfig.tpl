@@ -763,10 +763,11 @@ write_files:
         signedPfx="/home/wowza/signed.pfx"
         jksPath="/usr/local/WowzaStreamingEngine/conf/ssl.wowza.jks"
         jksPass="${certPassword}"
+        kvCertName="wildcard-hearings-reform-hmcts-net-28062022"
 
         az login --identity --username ${kvClientId}
 
-        az keyvault secret download --vault-name ${kvName} --file $downloadedPfx -n "wildcard-hearings-hmcts-net-28062022" --encoding base64
+        az keyvault secret download --vault-name ${kvName} --file $downloadedPfx -n $kvCertName --encoding base64
 
         export PATH=$PATH:/usr/local/WowzaStreamingEngine/java/bin
 
