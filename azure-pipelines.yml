@@ -104,7 +104,6 @@ stages:
   - stage: Deploy_Dev_Environments
     condition: or( contains(variables['Build.SourceBranch'], 'refs/heads/master'), contains(variables['Build.SourceBranch'], 'refs/pull') )
     dependsOn:
-      - Plan_Dev_Environments
       - Approve_Terraform_Dev
     jobs:
       - template: pipeline/terraform-deployment.yml
@@ -162,7 +161,7 @@ stages:
 
   - stage: Plan_Demo_Environments
     dependsOn:
-      - Plan_Dev_Environments
+      - Deploy_Dev_Environments
     jobs:
     - job: Demo_Plan
       pool:
@@ -231,7 +230,7 @@ stages:
   - ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
     - stage: Approve_Terraform_Demo
       displayName: 'Approve Terraform Demo'
-      dependsOn: Plan_Dev_Environments
+      dependsOn: Plan_Demo_Environments
       jobs:
         - job: waitForValidation
           displayName: 'Approve Terraform Demo'
@@ -306,7 +305,7 @@ stages:
 
   - stage: Plan_Preprod_Environments
     dependsOn:
-      - Plan_Dev_Environments
+      - Deploy_Dev_Environments
     jobs:
     - job: Preprod_Plan
       pool:
@@ -374,7 +373,7 @@ stages:
   - ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
     - stage: Approve_Terraform_PreProd
       displayName: 'Approve Terraform PreProd'
-      dependsOn: Plan_Dev_Environments
+      dependsOn: Plan_Preprod_Environments
       jobs:
         - job: waitForValidation
           displayName: 'Approve Terraform PreProd'
@@ -450,7 +449,7 @@ stages:
 
   - stage: Plan_Prod_Environments
     dependsOn:
-      - Plan_Dev_Environments
+      - Deploy_Preprod_Environments
     jobs:
     - job: Prod_Plan
       pool:
@@ -518,7 +517,7 @@ stages:
   - ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
     - stage: Approve_Terraform_Prod
       displayName: 'Approve Terraform Prod'
-      dependsOn: Plan_Dev_Environments
+      dependsOn: Plan_Prod_Environments
       jobs:
         - job: waitForValidation
           displayName: 'Approve Terraform Prod'
