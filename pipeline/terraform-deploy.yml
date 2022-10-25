@@ -6,8 +6,15 @@ parameters:
   tf_params:
   preSteps: []
   postSteps: []
+  tfversion: latest
 
 steps:
+
+  - task: TerraformInstaller@0
+    displayName: 'Install Terraform ${{ parameters.tfversion }}'
+    inputs:
+      terraformVersion: ${{ parameters.tfversion }}
+      
   - ${{ each step in parameters.preSteps }}:
       - ${{ each pair in step }}:
           ${{ pair.key }}: ${{ pair.value }}

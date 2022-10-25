@@ -38,6 +38,8 @@ data "template_file" "cloudconfig" {
     msiClientId          = var.storage_msi_client_id
     restPassword         = md5("wowza:Wowza:${random_password.restPassword.result}")
     streamPassword       = md5("wowza:Wowza:${random_password.streamPassword.result}")
+    kvName               = data.azurerm_key_vault.vhcoreinfra.name
+    kvClientId           = data.azurerm_user_assigned_identity.kv_user.client_id
   }
 }
 

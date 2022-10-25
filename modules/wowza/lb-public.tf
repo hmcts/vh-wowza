@@ -20,17 +20,25 @@ resource "azurerm_lb" "wowza-public" {
   }
 }
 
+resource "azurerm_lb_probe" "ssh_probe" {
+  resource_group_name = azurerm_resource_group.wowza.name
+  loadbalancer_id     = azurerm_lb.wowza-public.id
+  name                = "SSH-Probe"
+  port                = 22
+}
+
+
 resource "azurerm_lb_probe" "wowza_rtmps-public" {
   resource_group_name = azurerm_resource_group.wowza.name
   loadbalancer_id     = azurerm_lb.wowza-public.id
-  name                = "rtmps-running-probe"
+  name                = "RTMPS-Probe"
   port                = 443
 }
 
 resource "azurerm_lb_probe" "wowza_rest-public" {
   resource_group_name = azurerm_resource_group.wowza.name
   loadbalancer_id     = azurerm_lb.wowza-public.id
-  name                = "rest-running-probe"
+  name                = "REST-Probe"
   port                = 8087
 }
 
@@ -43,6 +51,19 @@ resource "azurerm_lb_rule" "wowza-public" {
   backend_port                   = 443
   frontend_ip_configuration_name = "wowza"
   probe_id                       = azurerm_lb_probe.wowza_rtmps-public.id
+  backend_address_pool_id        = azurerm_lb_backend_address_pool.wowza-public.id
+  load_distribution              = "Default"
+  idle_timeout_in_minutes        = 30
+}
+resource "azurerm_lb_rule" "ssh_rule" {
+  resource_group_name            = azurerm_resource_group.wowza.name
+  loadbalancer_id                = azurerm_lb.wowza-public.id
+  name                           = "SSH-Rule"
+  protocol                       = "Tcp"
+  frontend_port                  = 22
+  backend_port                   = 22
+  frontend_ip_configuration_name = "wowza"
+  probe_id                       = azurerm_lb_probe.ssh_probe.id
   backend_address_pool_id        = azurerm_lb_backend_address_pool.wowza-public.id
   load_distribution              = "Default"
   idle_timeout_in_minutes        = 30

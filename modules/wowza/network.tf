@@ -14,6 +14,8 @@ resource "azurerm_subnet" "wowza" {
 
   enforce_private_link_endpoint_network_policies = true
   enforce_private_link_service_network_policies = true
+  
+  service_endpoints                           = [ "Microsoft.KeyVault" ]
 }
 
 resource "azurerm_network_security_group" "wowza" {
@@ -21,6 +23,18 @@ resource "azurerm_network_security_group" "wowza" {
 
   resource_group_name = azurerm_resource_group.wowza.name
   location            = azurerm_resource_group.wowza.location
+
+  security_rule {
+    name                       = "AllowSSH"
+    priority                   = 1010
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefix      = var.address_space
+    destination_address_prefix = var.address_space
+  }
 
   security_rule {
     name                       = "REST"
@@ -46,5 +60,27 @@ resource "azurerm_network_security_group" "wowza" {
     destination_address_prefix = "*"
   }
 
+  security_rule {
+    name                       = "AllowLoadBalancerInbound"
+    priority                   = 4095
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "AzureLoadBalancer"
+    destination_address_prefix = "*"
+  }
 
+  security_rule {
+    name                       = "DenyVnetInbound"
+    priority                   = 4096
+    direction                  = "Inbound"
+    access                     = "Deny"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "VirtualNetwork"
+    destination_address_prefix = "*"
+  }
 }
