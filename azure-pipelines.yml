@@ -21,6 +21,7 @@ pr:
     - master
 
 stages:
+- ${{ if or( contains(variables['Build.SourceBranch'], 'refs/pull'), eq(variables['Build.SourceBranchName'], 'master')) }}:
   - stage: Plan_Dev_Environments
     jobs:
     - job: Dev_Plan
@@ -102,9 +103,7 @@ stages:
             onTimeout: 'reject'
 
   - stage: Deploy_Dev_Environments
-    condition: or( contains(variables['Build.SourceBranch'], 'refs/heads/master'), contains(variables['Build.SourceBranch'], 'refs/pull') )
-    dependsOn:
-      - Approve_Terraform_Dev
+    dependsOn: Approve_Terraform_Dev
     jobs:
       - template: pipeline/terraform-deployment.yml
         parameters:
@@ -159,9 +158,9 @@ stages:
                   env:
                     keyVaultName: $(publicCertKVName_dev)
 
+- ${{ if eq(variables['Build.SourceBranchName'], 'master')  }}:
   - stage: Plan_Demo_Environments
-    dependsOn:
-      - Deploy_Dev_Environments
+    dependsOn: Deploy_Dev_Environments
     jobs:
     - job: Demo_Plan
       pool:
@@ -193,7 +192,6 @@ stages:
             az keyvault network-rule add --name $env:keyVaultName --ip-address "$IP/32"
         env:
           keyVaultName: $(publicCertKVName_demo)
-
 
       - template: pipeline/terraform-plan.yml
         parameters:
@@ -227,28 +225,23 @@ stages:
         env:
           keyVaultName: $(publicCertKVName_demo)
 
-  - ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
-    - stage: Approve_Terraform_Demo
-      displayName: 'Approve Terraform Demo'
-      dependsOn: Plan_Demo_Environments
-      jobs:
-        - job: waitForValidation
-          displayName: 'Approve Terraform Demo'
-          pool: server
-          timeoutInMinutes: 4320 # job times out in 3 days
-          steps:
-          - task: ManualValidation@0
-            timeoutInMinutes: 1440 # task times out in 1 day
-            inputs:
-              instructions: 'Please Approve for Terraform Release...'
-              onTimeout: 'reject'
+  - stage: Approve_Terraform_Demo
+    displayName: 'Approve Terraform Demo'
+    dependsOn: Plan_Demo_Environments
+    jobs:
+      - job: waitForValidation
+        displayName: 'Approve Terraform Demo'
+        pool: server
+        timeoutInMinutes: 4320 # job times out in 3 days
+        steps:
+        - task: ManualValidation@0
+          timeoutInMinutes: 1440 # task times out in 1 day
+          inputs:
+            instructions: 'Please Approve for Terraform Release...'
+            onTimeout: 'reject'
 
   - stage: Deploy_Demo_Environments
-    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/master'))
-    dependsOn:
-      - Plan_Demo_Environments
-      - ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
-        - Approve_Terraform_Demo
+    dependsOn: Approve_Terraform_Demo
     jobs:
       - template: pipeline/terraform-deployment.yml
         parameters:
@@ -304,8 +297,7 @@ stages:
                     keyVaultName: $(publicCertKVName_demo)
 
   - stage: Plan_Preprod_Environments
-    dependsOn:
-      - Deploy_Dev_Environments
+    dependsOn: Deploy_Dev_Environments
     jobs:
     - job: Preprod_Plan
       pool:
@@ -370,28 +362,23 @@ stages:
         env:
           keyVaultName: $(publicCertKVName_preprod)
 
-  - ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
-    - stage: Approve_Terraform_PreProd
-      displayName: 'Approve Terraform PreProd'
-      dependsOn: Plan_Preprod_Environments
-      jobs:
-        - job: waitForValidation
-          displayName: 'Approve Terraform PreProd'
-          pool: server
-          timeoutInMinutes: 4320 # job times out in 3 days
-          steps:
-          - task: ManualValidation@0
-            timeoutInMinutes: 1440 # task times out in 1 day
-            inputs:
-              instructions: 'Please Approve for Terraform Release...'
-              onTimeout: 'reject'
+  - stage: Approve_Terraform_PreProd
+    displayName: 'Approve Terraform PreProd'
+    dependsOn: Plan_Preprod_Environments
+    jobs:
+      - job: waitForValidation
+        displayName: 'Approve Terraform PreProd'
+        pool: server
+        timeoutInMinutes: 4320 # job times out in 3 days
+        steps:
+        - task: ManualValidation@0
+          timeoutInMinutes: 1440 # task times out in 1 day
+          inputs:
+            instructions: 'Please Approve for Terraform Release...'
+            onTimeout: 'reject'
 
   - stage: Deploy_Preprod_Environments
-    condition: and(succeeded(), or(startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/')))
-    dependsOn:
-      - Plan_Preprod_Environments
-      - ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
-        - Approve_Terraform_PreProd
+    dependsOn: Approve_Terraform_PreProd
     jobs:
       - template: pipeline/terraform-deployment.yml
         parameters:
@@ -446,7 +433,7 @@ stages:
                   env:
                     keyVaultName: $(publicCertKVName_preprod)
 
-
+- ${{ if contains(variables['Build.SourceBranch'], 'release/')  }}:
   - stage: Plan_Prod_Environments
     dependsOn:
       - Deploy_Preprod_Environments
@@ -514,29 +501,23 @@ stages:
         env:
           keyVaultName: $(publicCertKVName_prod)
 
-  - ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
-    - stage: Approve_Terraform_Prod
-      displayName: 'Approve Terraform Prod'
-      dependsOn: Plan_Prod_Environments
-      jobs:
-        - job: waitForValidation
-          displayName: 'Approve Terraform Prod'
-          pool: server
-          timeoutInMinutes: 4320 # job times out in 3 days
-          steps:
-          - task: ManualValidation@0
-            timeoutInMinutes: 1440 # task times out in 1 day
-            inputs:
-              instructions: 'Please Approve for Terraform Release...'
-              onTimeout: 'reject'
+  - stage: Approve_Terraform_Prod
+    displayName: 'Approve Terraform Prod'
+    dependsOn: Plan_Prod_Environments
+    jobs:
+      - job: waitForValidation
+        displayName: 'Approve Terraform Prod'
+        pool: server
+        timeoutInMinutes: 4320 # job times out in 3 days
+        steps:
+        - task: ManualValidation@0
+          timeoutInMinutes: 1440 # task times out in 1 day
+          inputs:
+            instructions: 'Please Approve for Terraform Release...'
+            onTimeout: 'reject'
 
   - stage: Deploy_Prod_Environments
-    condition: and(succeeded(), or(startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/')))
-    dependsOn:
-      - Plan_Prod_Environments
-      - Deploy_Preprod_Environments
-      - ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
-        - Approve_Terraform_Prod
+    dependsOn: Approve_Terraform_Prod
     jobs:
       - template: pipeline/terraform-deployment.yml
         parameters:
