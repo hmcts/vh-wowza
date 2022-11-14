@@ -435,8 +435,6 @@ stages:
 
 - ${{ if contains(variables['Build.SourceBranch'], 'release/')  }}:
   - stage: Plan_Prod_Environments
-    dependsOn:
-      - Deploy_Preprod_Environments
     jobs:
     - job: Prod_Plan
       pool:
